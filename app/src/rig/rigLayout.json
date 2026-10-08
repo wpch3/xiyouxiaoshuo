@@ -1,0 +1,201 @@
+{
+  "_说明": "骨骼布局。关节坐标是相对于素材主体包围盒的归一化值：u 为宽度方向 0~1，v 为高度方向 0~1（从头顶到脚底）。骨骼按父在前、子在后排列。sigma 为影响半径（单位是包围盒高度）；vmin/vmax/fade 限定该骨骼只影响 v 在 [vmin, vmax] 内的顶点（边缘渐变宽度 fade），避免手臂带动裙摆、腿带动上半身。",
+  "joints": {
+    "headTop": [
+      0.5,
+      0.0
+    ],
+    "neck": [
+      0.5,
+      0.15
+    ],
+    "shoulderL": [
+      0.27,
+      0.2
+    ],
+    "shoulderR": [
+      0.73,
+      0.2
+    ],
+    "elbowL": [
+      0.15,
+      0.37
+    ],
+    "elbowR": [
+      0.85,
+      0.37
+    ],
+    "wristL": [
+      0.13,
+      0.5
+    ],
+    "wristR": [
+      0.87,
+      0.5
+    ],
+    "hip": [
+      0.5,
+      0.53
+    ],
+    "hipL": [
+      0.4,
+      0.53
+    ],
+    "hipR": [
+      0.6,
+      0.53
+    ],
+    "kneeL": [
+      0.4,
+      0.76
+    ],
+    "kneeR": [
+      0.6,
+      0.76
+    ],
+    "ankleL": [
+      0.4,
+      0.98
+    ],
+    "ankleR": [
+      0.6,
+      0.98
+    ]
+  },
+  "bones": [
+    {
+      "id": "pelvis",
+      "parent": null,
+      "from": "hipL",
+      "to": "hipR",
+      "pivot": "hip",
+      "sigma": 0.1,
+      "vmin": 0.4,
+      "vmax": 1.0,
+      "fade": 0.06
+    },
+    {
+      "id": "torso",
+      "parent": "pelvis",
+      "from": "hip",
+      "to": "neck",
+      "pivot": "hip",
+      "sigma": 0.12,
+      "vmin": 0.1,
+      "vmax": 0.62,
+      "fade": 0.05
+    },
+    {
+      "id": "head",
+      "parent": "torso",
+      "from": "neck",
+      "to": "headTop",
+      "pivot": "neck",
+      "sigma": 0.2,
+      "vmin": 0.0,
+      "vmax": 0.42,
+      "fade": 0.05
+    },
+    {
+      "id": "upperArmL",
+      "parent": "torso",
+      "from": "shoulderL",
+      "to": "elbowL",
+      "pivot": "shoulderL",
+      "sigma": 0.06,
+      "vmin": 0.1,
+      "vmax": 0.56,
+      "fade": 0.05,
+      "hmin": 0.22,
+      "hfade": 0.05
+    },
+    {
+      "id": "foreArmL",
+      "parent": "upperArmL",
+      "from": "elbowL",
+      "to": "wristL",
+      "pivot": "elbowL",
+      "sigma": 0.05,
+      "vmin": 0.28,
+      "vmax": 0.62,
+      "fade": 0.05,
+      "hmin": 0.22,
+      "hfade": 0.05
+    },
+    {
+      "id": "upperArmR",
+      "parent": "torso",
+      "from": "shoulderR",
+      "to": "elbowR",
+      "pivot": "shoulderR",
+      "sigma": 0.06,
+      "vmin": 0.1,
+      "vmax": 0.56,
+      "fade": 0.05,
+      "hmin": 0.22,
+      "hfade": 0.05
+    },
+    {
+      "id": "foreArmR",
+      "parent": "upperArmR",
+      "from": "elbowR",
+      "to": "wristR",
+      "pivot": "elbowR",
+      "sigma": 0.05,
+      "vmin": 0.28,
+      "vmax": 0.62,
+      "fade": 0.05,
+      "hmin": 0.22,
+      "hfade": 0.05
+    },
+    {
+      "id": "thighL",
+      "parent": "pelvis",
+      "from": "hipL",
+      "to": "kneeL",
+      "pivot": "hipL",
+      "sigma": 0.07,
+      "vmin": 0.44,
+      "vmax": 1.0,
+      "fade": 0.05
+    },
+    {
+      "id": "shinL",
+      "parent": "thighL",
+      "from": "kneeL",
+      "to": "ankleL",
+      "pivot": "kneeL",
+      "sigma": 0.06,
+      "vmin": 0.62,
+      "vmax": 1.0,
+      "fade": 0.05
+    },
+    {
+      "id": "thighR",
+      "parent": "pelvis",
+      "from": "hipR",
+      "to": "kneeR",
+      "pivot": "hipR",
+      "sigma": 0.07,
+      "vmin": 0.44,
+      "vmax": 1.0,
+      "fade": 0.05
+    },
+    {
+      "id": "shinR",
+      "parent": "thighR",
+      "from": "kneeR",
+      "to": "ankleR",
+      "pivot": "kneeR",
+      "sigma": 0.06,
+      "vmin": 0.62,
+      "vmax": 1.0,
+      "fade": 0.05
+    }
+  ],
+  "grid": {
+    "cols": 12,
+    "rows": 24,
+    "margin": 0.06
+  }
+}
