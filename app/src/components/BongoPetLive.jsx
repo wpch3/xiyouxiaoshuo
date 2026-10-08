@@ -2,7 +2,124 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { soundManager } from '../utils/soundManager';
 
-// 升级版高交互动感桌宠：包含键盘机械轴敲击音效、爪子起伏、眨眼微动、爱心音浪与点击波纹
+// 独立悬浮桌面伴侣容器组件
+export const FloatingDeskPetOverlay = ({ 
+  characterId = 'deepseek', 
+  mood = 'idle', 
+  speechText = '', 
+  tokensToday = 0,
+  onPet = () => {},
+  onClose = () => {}
+}) => {
+  const [position, setPosition] = useState({ x: window.innerWidth - 380, y: window.innerHeight - 340 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e) => {
+    // 忽略点击内部交互按钮
+    if (e.target.tagName === 'BUTTON') return;
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      setPosition({
+        x: Math.max(10, Math.min(window.innerWidth - 350, e.clientX - dragOffset.x)),
+        y: Math.max(10, Math.min(window.innerHeight - 320, e.clientY - dragOffset.y))
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      style={{
+        position: 'fixed',
+        left: position.x,
+        top: position.y,
+        zIndex: 999999,
+        cursor: isDragging ? 'grabbing' : 'grab',
+        pointerEvents: 'auto',
+        userSelect: 'none',
+        transition: isDragging ? 'none' : 'box-shadow 0.2s ease'
+      }}
+      className="floating-deskpet-window"
+    >
+      {/* 顶部极简拖拽把手与关闭/收起条 */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: '14px 14px 0 0',
+          padding: '4px 12px',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          borderBottom: 'none',
+          fontSize: '0.68rem',
+          color: '#94a3b8'
+        }}
+      >
+        <span>🐾 桌面置顶伴侣 (按住拖拽)</span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#ef4444',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            padding: '0 4px',
+            lineHeight: 1
+          }}
+          title="收回主界面"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* 内部渲染纯透明打字小猫/小动物桌宠 */}
+      <div
+        style={{
+          backgroundColor: 'rgba(15, 23, 42, 0.3)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '0 0 20px 20px',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          padding: '8px 12px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
+        }}
+      >
+        <BongoPetLive
+          characterId={characterId}
+          mood={mood}
+          speechText={speechText}
+          tokensToday={tokensToday}
+          onPet={onPet}
+          onOpenDashboard={onClose}
+        />
+      </div>
+    </div>
+  );
+};
 export const BongoPetLive = ({ 
   characterId = 'deepseek', 
   mood = 'idle', 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { AI_CHARACTERS, FOOD_ITEMS, MOCK_API_CALLS } from './constants/characters';
 import { AvatarRenderer } from './components/Avatars';
-import { BongoPetLive } from './components/BongoPetLive';
+import { BongoPetLive, FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
 import { soundManager } from './utils/soundManager';
 import {
@@ -40,6 +40,8 @@ export default function App() {
   const [currentId, setCurrentId] = useState('deepseek');
   // 桌面宠物形态模式：'full' (综合大屏仪表盘), 'compact' (精简桌宠窗)
   const [windowMode, setWindowMode] = useState('full');
+  // 是否开启右下角独立置顶悬浮伴侣小窗口
+  const [isFloatingOverlayOpen, setIsFloatingOverlayOpen] = useState(false);
   
   // 角色拟人状态
   const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'sleepy' | 'thinking'
@@ -361,6 +363,18 @@ export default function App() {
       {/* 全局点击彩色微粒子光晕特效 */}
       <ClickParticleCanvas />
 
+      {/* 独立置顶桌面伴侣小窗口 */}
+      {isFloatingOverlayOpen && (
+        <FloatingDeskPetOverlay
+          characterId={currentId}
+          mood={mood}
+          speechText={speechText}
+          tokensToday={acc.todayTokens}
+          onPet={handlePetAvatar}
+          onClose={() => setIsFloatingOverlayOpen(false)}
+        />
+      )}
+
       {/* 顶部多角色皮肤切换与状态栏 */}
       <header
         style={{
@@ -468,6 +482,26 @@ export default function App() {
 
         {/* 窗口形态与模拟器控制 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={() => setIsFloatingOverlayOpen(!isFloatingOverlayOpen)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              border: isFloatingOverlayOpen ? '1px solid #3B82F6' : '1px solid rgba(255,255,255,0.15)',
+              backgroundColor: isFloatingOverlayOpen ? '#3B82F633' : 'rgba(255,255,255,0.06)',
+              color: isFloatingOverlayOpen ? '#60A5FA' : '#cbd5e1',
+              cursor: 'pointer'
+            }}
+            title="开启/关闭独立桌面置顶伴侣小窗"
+          >
+            🐾 {isFloatingOverlayOpen ? '置顶小窗已激活' : '弹出独立桌宠小窗'}
+          </button>
+
           <button
             onClick={() => setIsSimulatingStream(!isSimulatingStream)}
             title={isSimulatingStream ? '暂停模拟后台 Token 消耗' : '开启模拟后台实时消耗'}
