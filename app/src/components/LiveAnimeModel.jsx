@@ -15,6 +15,7 @@ import { soundManager } from '../utils/soundManager';
  */
 export const LiveAnimeModel = ({
   characterId = 'deepseek',
+  form = 'normal', // 'normal' (少女) | 'loli' (萝莉) | 'mature' (青年女性) | 'chibi' (Q版)
   mood = 'idle', // 'idle' | 'happy' | 'crying' | 'thinking' | 'hammered'
   currentProp = 'none', // 'none' | 'hammer' | 'glove'
   isSpeaking = false,
@@ -50,6 +51,16 @@ export const LiveAnimeModel = ({
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // 根据形态解析图像路径
+  const getImagePath = () => {
+    if (form === 'chibi') return `/characters/${characterId}_chibi.png`;
+    if (form === 'loli') return `/characters/${characterId}_loli.png`;
+    if (form === 'mature') return `/characters/${characterId}_mature.png`;
+    return `/characters/${characterId}.png`;
+  };
+
+  const imageSrc = getImagePath();
+
   return (
     <div
       ref={containerRef}
@@ -84,8 +95,12 @@ export const LiveAnimeModel = ({
       >
         {/* 高清透明统一比例立绘 */}
         <img
-          src={`/characters/${characterId}.png`}
+          src={imageSrc}
           alt={characterId}
+          onError={(e) => {
+            // 降级回退
+            e.currentTarget.src = `/characters/${characterId}.png`;
+          }}
           style={{
             width: '100%',
             height: '100%',

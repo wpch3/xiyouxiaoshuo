@@ -491,7 +491,14 @@ export default function App() {
         {/* 窗口形态与模拟器控制 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
-            onClick={() => setIsFloatingOverlayOpen(!isFloatingOverlayOpen)}
+            onClick={() => {
+              // 1. 如果在 PyWebView / C++ 桌面宿主环境中，调用系统接口真正创建 OS 桌面级透明置顶窗口
+              if (window.pywebview && window.pywebview.api && window.pywebview.api.spawn_floating_pet) {
+                window.pywebview.api.spawn_floating_pet();
+              }
+              // 2. 同时在前端激活置顶伴侣
+              setIsFloatingOverlayOpen(!isFloatingOverlayOpen);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -763,6 +770,7 @@ export default function App() {
               >
                 <LiveAnimeModel
                   characterId={currentId}
+                  form={characterForm}
                   mood={mood}
                   currentProp={currentProp}
                   isSpeaking={isSpeaking}
@@ -948,41 +956,39 @@ export default function App() {
                 </form>
               </div>
 
-              {/* 立绘形态与服饰切换 */}
+              {/* 立绘形态与服饰切换 (完整支持 少女 / 萝莉 / 青年女性 / Q版萌宠 四种形态) */}
               <div style={{ width: '100%', zIndex: 2, marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '14px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 形态 & 服饰</span>
-                    {/* 少女立绘 / Q版切换药丸按钮 */}
-                    <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '2px' }}>
-                      <button
-                        onClick={() => setCharacterForm('normal')}
-                        style={{
-                          fontSize: '0.68rem',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          border: 'none',
-                          backgroundColor: characterForm === 'normal' ? char.color : 'transparent',
-                          color: '#fff',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        少女立绘
-                      </button>
-                      <button
-                        onClick={() => setCharacterForm('chibi')}
-                        style={{
-                          fontSize: '0.68rem',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          border: 'none',
-                          backgroundColor: characterForm === 'chibi' ? char.color : 'transparent',
-                          color: '#fff',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Q版萌宠
-                      </button>
+                    <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 四大形态切换</span>
+                    {/* 少女 / 萝莉 / 青年女性 / Q版 4态切换药丸按钮 */}
+                    <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '2px', gap: '2px' }}>
+                      {[
+                        { id: 'normal', label: '少女' },
+                        { id: 'loli', label: '萝莉' },
+                        { id: 'mature', label: '青年女性' },
+                        { id: 'chibi', label: 'Q版' }
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => {
+                            soundManager.playSwitch();
+                            setCharacterForm(f.id);
+                          }}
+                          style={{
+                            fontSize: '0.68rem',
+                            padding: '2px 7px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            backgroundColor: characterForm === f.id ? char.color : 'transparent',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            fontWeight: characterForm === f.id ? 600 : 400
+                          }}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
