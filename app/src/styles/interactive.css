@@ -59,7 +59,16 @@
   100% { transform: translateY(0px) scale(1); }
 }
 
-.character-happy-jump {
-  animation: characterHappyJump 0.6s infinite alternate ease-in-out;
+/* 委屈抽泣抖动动画 */
+@keyframes cryingShake {
+  0% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(3px) rotate(-1.5deg); }
+  50% { transform: translateY(0px) rotate(0deg); }
+  75% { transform: translateY(3px) rotate(1.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.character-crying-shake {
+  animation: cryingShake 0.22s infinite ease-in-out;
   transform-origin: center bottom;
 }

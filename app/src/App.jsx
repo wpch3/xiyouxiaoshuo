@@ -819,13 +819,14 @@ export default function App() {
                 <button
                   onClick={() => {
                     setCurrentProp('hammer');
-                    setMood('crying');
+                    setMood('hammered');
                     soundManager.playTap(true);
-                    setSpeechText("啊！小锤子敲脑袋啦，好痛！");
+                    setSpeechText("Duang！小锤子敲到头顶啦，眼冒金星啦...");
                     setTimeout(() => {
                       setCurrentProp('none');
-                      setMood('idle');
-                    }, 1800);
+                      setMood('crying');
+                      setTimeout(() => setMood('idle'), 2000);
+                    }, 1400);
                   }}
                   style={{
                     padding: '4px 8px',
