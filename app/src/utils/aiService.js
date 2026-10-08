@@ -1,125 +1,183 @@
-/**
- * 真实与模拟多协议 AI API 客户端引擎
- * 支持：DeepSeek / Claude (Anthropic) / OpenAI / Gemini / Qwen
- * 包含：真实 API Key 设置、实时打字流式返回 (Streaming)、Token 消耗精准统计与错误处理
- */
+const CONFIG_STORAGE_KEY = 'pet_api_configs_v1';
+const VOICE_CONFIG_STORAGE_KEY = 'pet_voice_config_v1';
+const DEFAULT_VOICE_CONFIG = { baseUrl: 'https://api.openai.com/v1', speechModel: 'tts-1', transcriptionModel: 'whisper-1', voice: 'alloy' };
+
+export const DEFAULT_PROVIDER_CONFIGS = {
+  deepseek: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+  claude: { mode: 'official', protocol: 'anthropic', baseUrl: 'https://api.anthropic.com/v1', model: 'claude-3-5-sonnet-latest' },
+  openai: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
+  gemini: { mode: 'official', protocol: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.0-flash' },
+  qwen: { mode: 'official', protocol: 'openai', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' },
+  kimi: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k' },
+  grok: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.x.ai/v1', model: 'grok-3-mini' },
+};
+
+const safeReadJson = (key, fallback) => {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const safeWriteJson = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('无法保存本地 API 配置:', error);
+  }
+};
+
 class AITokenPetService {
   constructor() {
-    this.apiKeys = {
-      deepseek: localStorage.getItem('pet_key_deepseek') || '',
-      claude: localStorage.getItem('pet_key_claude') || '',
-      openai: localStorage.getItem('pet_key_openai') || '',
-      gemini: localStorage.getItem('pet_key_gemini') || '',
-      qwen: localStorage.getItem('pet_key_qwen') || '',
-      kimi: localStorage.getItem('pet_key_kimi') || '',
-      grok: localStorage.getItem('pet_key_grok') || ''
-    };
+    this.configs = safeReadJson(CONFIG_STORAGE_KEY, {});
+    this.apiKeys = Object.fromEntries(
+      Object.keys(DEFAULT_PROVIDER_CONFIGS).map((provider) => [
+        provider,
+        this._readKey(provider),
+      ]),
+    );
+  }
+
+  _readKey(provider) {
+    try {
+      return localStorage.getItem(`pet_key_${provider}`) || '';
+    } catch {
+      return '';
+    }
+  }
+
+  getApiConfig(provider) {
+    const defaults = DEFAULT_PROVIDER_CONFIGS[provider] || DEFAULT_PROVIDER_CONFIGS.openai;
+    return { ...defaults, ...(this.configs[provider] || {}) };
+  }
+
+  setApiConfig(provider, patch) {
+    const current = this.getApiConfig(provider);
+    const next = { ...current, ...patch };
+    this.configs = { ...this.configs, [provider]: next };
+    safeWriteJson(CONFIG_STORAGE_KEY, this.configs);
+    return next;
   }
 
   setApiKey(provider, key) {
     this.apiKeys[provider] = key;
-    localStorage.setItem(`pet_key_${provider}`, key);
+    try {
+      localStorage.setItem(`pet_key_${provider}`, key);
+    } catch (error) {
+      console.warn('无法保存本地 API Key:', error);
+    }
   }
 
   getApiKey(provider) {
-    return this.apiKeys[provider] || '';
+    return this.apiKeys[provider] || this._readKey(provider);
   }
 
-  // 发起真实的 LLM 请求或本地高质量模拟流式交互
-  async sendPrompt({ provider, prompt, systemPrompt, onChunk, onComplete, onError }) {
-    const key = this.getApiKey(provider);
+  getVoiceConfig() {
+    return { ...DEFAULT_VOICE_CONFIG, ...safeReadJson(VOICE_CONFIG_STORAGE_KEY, {}) };
+  }
 
-    // 1. 如果用户配置了真实 API Key，发起真实的 HTTP 请求
-    if (key && key.trim().length > 5) {
-      try {
-        let endpoint = 'https://api.deepseek.com/v1/chat/completions';
-        let headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`
-        };
-        let body = {
-          model: provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt || '你是一只活泼可爱的桌面伴侣，用简短生动的语气回答我。' },
-            { role: 'user', content: prompt }
-          ],
-          stream: true
-        };
+  setVoiceConfig(patch) {
+    const next = { ...this.getVoiceConfig(), ...patch };
+    safeWriteJson(VOICE_CONFIG_STORAGE_KEY, next);
+    return next;
+  }
 
-        if (provider === 'openai') {
-          endpoint = 'https://api.openai.com/v1/chat/completions';
-        } else if (provider === 'qwen') {
-          endpoint = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
-        }
+  getVoiceApiKey() {
+    return this._readKey('voice');
+  }
 
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-          throw new Error(`API 响应错误: ${response.status} ${response.statusText}`);
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let fullText = '';
-        let totalTokens = 0;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-              try {
-                const json = JSON.parse(line.slice(6));
-                const content = json.choices[0]?.delta?.content || '';
-                if (content) {
-                  fullText += content;
-                  totalTokens += 1;
-                  if (onChunk) onChunk(content, fullText);
-                }
-              } catch (e) {}
-            }
-          }
-        }
-
-        if (onComplete) onComplete({ fullText, tokens: Math.max(fullText.length * 2, totalTokens) });
-        return;
-      } catch (err) {
-        console.warn('调用真实 API 失败，降级为内置智能体流式应答:', err);
-      }
+  setVoiceApiKey(key) {
+    try {
+      localStorage.setItem('pet_key_voice', key);
+    } catch (error) {
+      console.warn('无法保存本地语音 API Key:', error);
     }
+  }
 
-    // 2. 本地自建智能体流式响应引擎 (即使断网或没填 Key 也能真正流式返回)
-    const mockResponses = [
-      `收到主人的指令啦！正在调动全域算力进行分析... 逻辑链已推演完毕，随时听候您的差遣哦！✨`,
-      `哼哼～主人刚才打字好快，我刚才数了一下，一秒钟至少敲了5个按键呢！今天我也在元气满满地守护你！`,
-      `<think> 正在思考主人的最新需求... 经过深度自省与参数调优，该方案最佳实践已为您整理就绪！ </think> 答案马上送到！`,
-      `Token 储备非常充足！知识库全线保持在线，请问接下来我们来攻克哪一个难题呢？`
-    ];
-    const picked = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-    let cur = '';
-    let idx = 0;
+  async transcribeAudio(audioBlob) {
+    const config = this.getVoiceConfig();
+    const form = new FormData();
+    form.append('apiKey', this.getVoiceApiKey());
+    form.append('baseUrl', config.baseUrl);
+    form.append('model', config.transcriptionModel);
+    const audioType = String(audioBlob.type || '').split(';')[0].toLowerCase();
+    const audioExtension = ({ 'audio/mp4': 'm4a', 'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'audio/wav': 'wav', 'audio/x-wav': 'wav' })[audioType] || 'webm';
+    form.append('file', audioBlob, `voice.${audioExtension}`);
+    const response = await fetch('/api/transcribe', { method: 'POST', body: form });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || `语音识别失败 (${response.status})`);
+    return String(result.text || '');
+  }
 
-    const interval = setInterval(() => {
-      if (idx < picked.length) {
-        cur += picked[idx];
-        idx++;
-        if (onChunk) onChunk(picked[idx - 1], cur);
-      } else {
-        clearInterval(interval);
-        if (onComplete) {
-          onComplete({
-            fullText: cur,
-            tokens: Math.floor(cur.length * 2.5 + 40)
-          });
-        }
+  async synthesizeSpeech(text) {
+    const config = this.getVoiceConfig();
+    const response = await fetch('/api/voice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: this.getVoiceApiKey(),
+        baseUrl: config.baseUrl,
+        model: config.speechModel,
+        voice: config.voice,
+        text,
+      }),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error || `语音合成失败 (${response.status})`);
+    }
+    return response.blob();
+  }
+
+  async sendPrompt({ provider, prompt, messages, systemPrompt, onChunk, onComplete, onError, signal }) {
+    const conversation = Array.isArray(messages) && messages.length
+      ? messages
+      : [{ role: 'user', content: prompt || '' }];
+    const config = this.getApiConfig(provider);
+    const apiKey = this.getApiKey(provider);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal,
+        body: JSON.stringify({
+          provider,
+          config,
+          apiKey,
+          messages: conversation,
+          systemPrompt: systemPrompt || '',
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || `本地 API 网关响应错误 (${response.status})`);
       }
-    }, 40);
+
+      const fullText = String(result.text || '');
+      const usage = result.usage || {};
+      const tokens = Number(usage.totalTokens) || 0;
+      const completion = {
+        fullText,
+        model: result.model || config.model,
+        tokens,
+        inputTokens: Number(usage.inputTokens) || 0,
+        outputTokens: Number(usage.outputTokens) || 0,
+        usageSource: usage.source === 'api' ? 'api' : 'estimated',
+      };
+      if (onChunk && fullText) onChunk(fullText, fullText);
+      if (onComplete) onComplete(completion);
+      return completion;
+    } catch (error) {
+      const message = error?.name === 'AbortError'
+        ? '请求已取消'
+        : (error?.message || 'API 请求失败');
+      if (onError) onError(message);
+      throw error;
+    }
   }
 }
 

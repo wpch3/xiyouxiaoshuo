@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { AI_CHARACTERS, FOOD_ITEMS, MOCK_API_CALLS } from './constants/characters';
+import { AI_CHARACTERS, FOOD_ITEMS } from './constants/characters';
 import { AvatarRenderer } from './components/Avatars';
 import { LiveInteractiveAvatar } from './components/LiveInteractiveAvatar';
 import { LiveAnimeModel } from './components/LiveAnimeModel';
 import { BongoRealDesk } from './components/BongoRealDesk';
 import { BongoPetLive, FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
+import { VoiceChatControls } from './components/VoiceChatControls';
+import { WorkspacePanel, LibraryPanel, AgentPanel, SocialPanel, LinksPanel } from './components/ProjectPanels';
+import { listLocalDocuments } from './utils/localDocumentStore';
 import { soundManager } from './utils/soundManager';
-import { aiService } from './utils/aiService';
+import { aiService, DEFAULT_PROVIDER_CONFIGS } from './utils/aiService';
 import {
   Sparkles,
   Zap,
@@ -33,29 +36,78 @@ import {
   Layers,
   ChevronRight,
   PlusCircle,
-  Play,
-  Pause,
   AlertTriangle,
   Gift
 } from 'lucide-react';
 
+const ACCOUNT_STORAGE_KEY = 'pet_account_state_v1';
+const CHAT_STORAGE_KEY = 'pet_chat_history_v1';
+const CALL_LOG_STORAGE_KEY = 'pet_call_log_v1';
+
+const localDateKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const makeEmptyAccounts = () => Object.fromEntries(
+  Object.keys(AI_CHARACTERS).map((id) => [id, {
+    balanceTokens: 0,
+    totalSpentTokens: 0,
+    totalCostUSD: 0,
+    todayTokens: 0,
+    todayCostUSD: 0,
+    health: 100,
+    budgetLimitUSD: 50,
+    quotaWarnPercent: 85,
+  }]),
+);
+
+const readLocalJson = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const loadAccounts = () => {
+  const empty = makeEmptyAccounts();
+  const saved = readLocalJson(ACCOUNT_STORAGE_KEY, null);
+  if (!saved) return empty;
+  const savedAccounts = saved.accounts || saved;
+  const accounts = Object.fromEntries(Object.keys(empty).map((id) => [
+    id,
+    { ...empty[id], ...(savedAccounts[id] || {}) },
+  ]));
+  if (saved.date && saved.date !== localDateKey()) {
+    Object.values(accounts).forEach((account) => {
+      account.todayTokens = 0;
+      account.todayCostUSD = 0;
+    });
+  }
+  return accounts;
+};
+
 export default function App() {
   // 当前选中的 AI 角色 (默认选择看板娘小寻 DeepSeek)
-  const [currentId, setCurrentId] = useState('deepseek');
-  // 桌面宠物形态模式：'full' (综合大屏仪表盘), 'compact' (精简桌宠窗)
-  const [windowMode, setWindowMode] = useState('full');
+  const [currentId, setCurrentId] = useState(() => readLocalJson('pet_current_character_v1', 'deepseek'));
+  // 独立桌面小窗通过 #compact 打开时，直接进入紧凑模式
+  const [windowMode, setWindowMode] = useState(() => window.location.hash === '#compact' ? 'compact' : 'full');
   // 是否开启右下角独立置顶悬浮伴侣小窗口
   const [isFloatingOverlayOpen, setIsFloatingOverlayOpen] = useState(false);
   
   // 角色拟人状态
   const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'crying' | 'thinking' | 'hammered'
-  const [characterForm, setCharacterForm] = useState('normal'); // 'normal' (少女立绘) | 'chibi' (Q版萌宠立绘)
+  const [characterForm, setCharacterForm] = useState(() => readLocalJson('pet_character_form_v1', 'normal')); // loli | normal(少女) | mature | chibi
   const [speechText, setSpeechText] = useState('');
   const [currentProp, setCurrentProp] = useState('none'); // 'none' | 'hammer' | 'glove'
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [userChatInput, setUserChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [favorability, setFavorability] = useState({
+  const [apiConfig, setApiConfigState] = useState(() => aiService.getApiConfig('deepseek'));
+  const [voiceConfig, setVoiceConfigState] = useState(() => aiService.getVoiceConfig());
+  const [favorability, setFavorability] = useState(() => readLocalJson('pet_favorability_v1', {
     deepseek: 98,
     claude: 92,
     openai: 89,
@@ -63,10 +115,10 @@ export default function App() {
     qwen: 95,
     kimi: 93,
     grok: 86
-  });
+  }));
 
   // 服饰系统：记录各角色当前穿戴的服饰
-  const [selectedOutfit, setSelectedOutfit] = useState({
+  const [selectedOutfit, setSelectedOutfit] = useState(() => readLocalJson('pet_selected_outfits_v1', {
     deepseek: 'maid',
     claude: 'scholar',
     openai: 'maid',
@@ -74,96 +126,56 @@ export default function App() {
     qwen: 'hanfu',
     kimi: 'trench',
     grok: 'biker'
-  });
+  }));
   
-  // 各角色的动态 Token 与消费账户状态
-  const [accounts, setAccounts] = useState({
-    deepseek: {
-      balanceTokens: 4890000,
-      totalSpentTokens: 18950000,
-      totalCostUSD: 26.15,
-      todayTokens: 1250000,
-      todayCostUSD: 1.71,
-      health: 98,
-      budgetLimitUSD: 50.0,
-      quotaWarnPercent: 85
-    },
-    claude: {
-      balanceTokens: 1420500,
-      totalSpentTokens: 8579400,
-      totalCostUSD: 42.60,
-      todayTokens: 384500,
-      todayCostUSD: 1.92,
-      health: 88,
-      budgetLimitUSD: 100.0,
-      quotaWarnPercent: 80
-    },
-    openai: {
-      balanceTokens: 890400,
-      totalSpentTokens: 14280000,
-      totalCostUSD: 89.25,
-      todayTokens: 920000,
-      todayCostUSD: 5.75,
-      health: 74,
-      budgetLimitUSD: 150.0,
-      quotaWarnPercent: 75
-    },
-    gemini: {
-      balanceTokens: 3200000,
-      totalSpentTokens: 9800000,
-      totalCostUSD: 30.38,
-      todayTokens: 620000,
-      todayCostUSD: 1.92,
-      health: 92,
-      budgetLimitUSD: 80.0,
-      quotaWarnPercent: 80
-    },
-    qwen: {
-      balanceTokens: 2800000,
-      totalSpentTokens: 11200000,
-      totalCostUSD: 17.92,
-      todayTokens: 780000,
-      todayCostUSD: 1.25,
-      health: 95,
-      budgetLimitUSD: 60.0,
-      quotaWarnPercent: 80
-    },
-    kimi: {
-      balanceTokens: 2150000,
-      totalSpentTokens: 6420000,
-      totalCostUSD: 15.40,
-      todayTokens: 520000,
-      todayCostUSD: 1.24,
-      health: 94,
-      budgetLimitUSD: 70.0,
-      quotaWarnPercent: 80
-    },
-    grok: {
-      balanceTokens: 1780000,
-      totalSpentTokens: 8900000,
-      totalCostUSD: 44.50,
-      todayTokens: 890000,
-      todayCostUSD: 4.45,
-      health: 91,
-      budgetLimitUSD: 100.0,
-      quotaWarnPercent: 75
-    }
-  });
+  // 本地累计的真实 API 用量与桌宠能量状态（费用以实际 API usage 计量）
+  const [accounts, setAccounts] = useState(loadAccounts);
+  const [liveCallLog, setLiveCallLog] = useState(() => readLocalJson(CALL_LOG_STORAGE_KEY, []));
+  const [chatHistories, setChatHistories] = useState(() => readLocalJson(CHAT_STORAGE_KEY, {}));
+  const [documents, setDocuments] = useState([]);
 
-  // 模拟自动化实时调用流 / 开关
-  const [isSimulatingStream, setIsSimulatingStream] = useState(true);
-  const [liveCallLog, setLiveCallLog] = useState([
-    { id: 1, time: '12:24:10', model: 'Claude 3.7 Sonnet', action: '深度学术论文综述提炼', tokens: 84000, cost: 0.756, status: '成功' },
-    { id: 2, time: '12:23:45', model: 'GPT-4o', action: '多模态图片 OCR 与逻辑提取', tokens: 18500, cost: 0.115, status: '成功' },
-    { id: 3, time: '12:22:18', model: 'DeepSeek-R1', action: '全自动单元测试用例生成', tokens: 29100, cost: 0.039, status: '成功' },
-    { id: 4, time: '12:20:05', model: 'Gemini 1.5 Pro', action: '长篇对话上下文记忆检索', tokens: 45000, cost: 0.139, status: '成功' }
-  ]);
+  useEffect(() => {
+    listLocalDocuments().then(setDocuments).catch((error) => console.warn('读取本机资料库失败:', error));
+  }, []);
 
   // Tab 切换：'pet' (互动饲养), 'analytics' (消耗统计), 'billing' (预算与充值), 'settings' (偏好与API)
   const [activeTab, setActiveTab] = useState('pet');
 
-  const char = AI_CHARACTERS[currentId];
-  const acc = accounts[currentId];
+  const char = AI_CHARACTERS[currentId] || AI_CHARACTERS.deepseek;
+  const acc = accounts[currentId] || makeEmptyAccounts().deepseek;
+  const currentChatMessages = chatHistories[currentId] || [];
+  const localDocumentContext = documents
+    .filter((document) => document.includeInContext && document.textContent)
+    .map((document) => `【本机资料：${document.name}】\n${document.textContent}`)
+    .join('\n\n')
+    .slice(0, 50_000);
+  const latestAssistantText = [...currentChatMessages].reverse().find((message) => message.role === 'assistant' && !message.pending && !message.failed)?.content || '';
+
+  useEffect(() => {
+    setApiConfigState(aiService.getApiConfig(currentId));
+  }, [currentId]);
+
+  const updateApiConfig = (patch) => {
+    setApiConfigState(aiService.setApiConfig(currentId, patch));
+  };
+  const updateVoiceConfig = (patch) => {
+    setVoiceConfigState(aiService.setVoiceConfig(patch));
+  };
+
+  // 对话、用量、偏好和服饰都保存在本机浏览器存储中
+  useEffect(() => {
+    try {
+      localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify({ date: localDateKey(), accounts }));
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistories));
+      localStorage.setItem(CALL_LOG_STORAGE_KEY, JSON.stringify(liveCallLog.slice(0, 100)));
+      localStorage.setItem('pet_current_character_v1', JSON.stringify(currentId));
+      localStorage.setItem('pet_character_form_v1', JSON.stringify(characterForm));
+      localStorage.setItem('pet_selected_outfits_v1', JSON.stringify(selectedOutfit));
+      localStorage.setItem('pet_favorability_v1', JSON.stringify(favorability));
+    } catch (error) {
+      console.warn('本地数据保存失败:', error);
+    }
+  }, [accounts, chatHistories, liveCallLog, currentId, characterForm, selectedOutfit, favorability]);
 
   // 初始化说话
   useEffect(() => {
@@ -183,56 +195,6 @@ export default function App() {
     }, 18000);
     return () => clearInterval(interval);
   }, [currentId, mood]);
-
-  // 模拟后台实时 Token 消耗心跳（桌面伴侣实时感）
-  useEffect(() => {
-    if (!isSimulatingStream) return;
-    const interval = setInterval(() => {
-      const randomCall = MOCK_API_CALLS[Math.floor(Math.random() * MOCK_API_CALLS.length)];
-      const tokenCount = Math.floor(randomCall.tokens * (0.8 + Math.random() * 0.4));
-      const costCalc = Number((tokenCount * char.tokenRate.avgPricePerToken).toFixed(4));
-      const nowStr = new Date().toTimeString().split(' ')[0];
-
-      setAccounts(prev => {
-        const cur = prev[currentId];
-        const newBalance = Math.max(0, cur.balanceTokens - tokenCount);
-        const newTotalSpent = cur.totalSpentTokens + tokenCount;
-        const newCost = Number((cur.totalCostUSD + costCalc).toFixed(3));
-        const newTodayTokens = cur.todayTokens + tokenCount;
-        const newTodayCost = Number((cur.todayCostUSD + costCalc).toFixed(3));
-        // 健康度受余额比率轻微影响
-        const newHealth = Math.min(100, Math.max(10, Math.round((newBalance / (newBalance + 500000)) * 100)));
-
-        return {
-          ...prev,
-          [currentId]: {
-            ...cur,
-            balanceTokens: newBalance,
-            totalSpentTokens: newTotalSpent,
-            totalCostUSD: newCost,
-            todayTokens: newTodayTokens,
-            todayCostUSD: newTodayCost,
-            health: newHealth
-          }
-        };
-      });
-
-      setLiveCallLog(prev => [
-        {
-          id: Date.now(),
-          time: nowStr,
-          model: char.name.split(' ')[0],
-          action: randomCall.action,
-          tokens: tokenCount,
-          cost: costCalc,
-          status: '成功'
-        },
-        ...prev.slice(0, 19)
-      ]);
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, [currentId, isSimulatingStream, char]);
 
   // 互动：摸摸头
   const handlePetAvatar = () => {
@@ -303,49 +265,126 @@ export default function App() {
     }, 3500);
   };
 
-  // 手动测试快速消耗模拟（如模拟发起一次 Agent 重度思考）
-  const triggerManualCall = (tokensToConsume = 50000, actionName = '执行深度自省推理任务') => {
-    setMood('thinking');
-    soundManager.playThinking();
-    setSpeechText(currentId === 'deepseek' ? "<think> 正在逐层反思推理验证最优逻辑解... </think>" : "正在全力计算中，请稍候片刻...");
+  const updatePendingAssistant = (provider, messageId, patch) => {
+    setChatHistories((prev) => ({
+      ...prev,
+      [provider]: (prev[provider] || []).map((message) =>
+        message.id === messageId ? { ...message, ...patch } : message,
+      ),
+    }));
+  };
 
-    setTimeout(() => {
-      const costCalc = Number((tokensToConsume * char.tokenRate.avgPricePerToken).toFixed(4));
-      const nowStr = new Date().toTimeString().split(' ')[0];
-
-      setAccounts(prev => {
-        const cur = prev[currentId];
-        return {
-          ...prev,
-          [currentId]: {
-            ...cur,
-            balanceTokens: Math.max(0, cur.balanceTokens - tokensToConsume),
-            totalSpentTokens: cur.totalSpentTokens + tokensToConsume,
-            totalCostUSD: Number((cur.totalCostUSD + costCalc).toFixed(3)),
-            todayTokens: cur.todayTokens + tokensToConsume,
-            todayCostUSD: Number((cur.todayCostUSD + costCalc).toFixed(3))
-          }
-        };
-      });
-
-      setLiveCallLog(prev => [
-        {
-          id: Date.now(),
-          time: nowStr,
-          model: char.name.split(' ')[0],
-          action: actionName,
-          tokens: tokensToConsume,
-          cost: costCalc,
-          status: '完成'
+  const recordApiUsage = (provider, action, result) => {
+    const selectedCharacter = AI_CHARACTERS[provider] || AI_CHARACTERS.deepseek;
+    const inputCost = (Number(result.inputTokens || 0) * selectedCharacter.tokenRate.inputCostPer1M) / 1_000_000;
+    const outputCost = (Number(result.outputTokens || 0) * selectedCharacter.tokenRate.outputCostPer1M) / 1_000_000;
+    const costCalc = Number((inputCost + outputCost).toFixed(6));
+    const usedTokens = Number(result.tokens) || 0;
+    const nowStr = new Date().toTimeString().split(' ')[0];
+    setAccounts((prev) => {
+      const cur = prev[provider] || makeEmptyAccounts()[provider];
+      const balanceTokens = Math.max(0, cur.balanceTokens - usedTokens);
+      return {
+        ...prev,
+        [provider]: {
+          ...cur,
+          balanceTokens,
+          totalSpentTokens: cur.totalSpentTokens + usedTokens,
+          totalCostUSD: Number((cur.totalCostUSD + costCalc).toFixed(6)),
+          todayTokens: cur.todayTokens + usedTokens,
+          todayCostUSD: Number((cur.todayCostUSD + costCalc).toFixed(6)),
+          health: Math.max(10, Math.round((balanceTokens / (balanceTokens + 500_000)) * 100)),
         },
-        ...prev.slice(0, 19)
-      ]);
+      };
+    });
+    setLiveCallLog((prev) => [{
+      id: `usage-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      time: nowStr,
+      model: result.model || selectedCharacter.modelFamily,
+      action: String(action || '').slice(0, 90),
+      tokens: usedTokens,
+      cost: costCalc,
+      status: '成功',
+      usageSource: result.usageSource,
+    }, ...prev].slice(0, 100));
+  };
 
-      setMood('happy');
-      setSpeechText(`呼！成功处理完毕，共消耗 ${(tokensToConsume / 1000).toFixed(1)}k Tokens，解答已生成！`);
+  const sendChatMessage = async (rawPrompt = userChatInput) => {
+    const prompt = String(rawPrompt || '').trim();
+    if (!prompt || isAiLoading) return;
 
-      setTimeout(() => setMood('idle'), 3000);
-    }, 1200);
+    const provider = currentId;
+    const selectedCharacter = AI_CHARACTERS[provider] || AI_CHARACTERS.deepseek;
+    const previousMessages = (chatHistories[provider] || [])
+      .filter((message) => !message.pending && !message.failed && message.content)
+      .slice(-30)
+      .map(({ role, content }) => ({ role, content }));
+    const userMessage = { id: `u-${Date.now()}`, role: 'user', content: prompt, createdAt: new Date().toISOString() };
+    const assistantId = `a-${Date.now()}`;
+
+    setUserChatInput('');
+    setIsAiLoading(true);
+    setIsSpeaking(true);
+    setMood('thinking');
+    setSpeechText('正在连接所选 API…');
+    soundManager.playThinking();
+    setChatHistories((prev) => ({
+      ...prev,
+      [provider]: [
+        ...(prev[provider] || []),
+        userMessage,
+        { id: assistantId, role: 'assistant', content: '', pending: true, createdAt: new Date().toISOString() },
+      ].slice(-100),
+    }));
+
+    try {
+      await aiService.sendPrompt({
+        provider,
+        messages: [...previousMessages, { role: 'user', content: prompt }],
+        systemPrompt: `你是 ${selectedCharacter.name}，角色特征：${selectedCharacter.tag}。性格：${selectedCharacter.voiceStyle}。请以自然、简洁、友善的桌宠语气回答；用户提出工作任务时优先给出可执行的结果。${localDocumentContext ? `\n\n以下是用户在本机资料库中勾选的上下文资料，请按需引用：\n${localDocumentContext}` : ''}`,
+        onChunk: (_chunk, fullText) => {
+          setSpeechText(fullText);
+          updatePendingAssistant(provider, assistantId, { content: fullText, pending: true });
+        },
+        onComplete: (result) => {
+          setIsAiLoading(false);
+          setIsSpeaking(false);
+          setMood('happy');
+          setSpeechText(result.fullText);
+          soundManager.playPet();
+          updatePendingAssistant(provider, assistantId, {
+            content: result.fullText,
+            pending: false,
+            model: result.model,
+            tokens: result.tokens,
+            inputTokens: result.inputTokens,
+            outputTokens: result.outputTokens,
+            usageSource: result.usageSource,
+          });
+
+          recordApiUsage(provider, prompt, result);
+          setTimeout(() => setMood('idle'), 3000);
+        },
+        onError: (message) => {
+          setIsAiLoading(false);
+          setIsSpeaking(false);
+          setMood('idle');
+          setSpeechText(`API 调用失败：${message}`);
+          updatePendingAssistant(provider, assistantId, {
+            content: `API 调用失败：${message}`,
+            pending: false,
+            failed: true,
+          });
+        },
+      });
+    } catch {
+      // aiService 已通过 onError 把错误写进对话记录；不再降级成虚构回答。
+    }
+  };
+
+  // 快捷任务走真实 API 对话，不再虚构 Token 消耗。
+  const triggerManualCall = (actionName = '请帮我完成当前任务') => {
+    sendChatMessage(`请帮我完成：${actionName}`);
   };
 
   // 格式化函数
@@ -372,7 +411,7 @@ export default function App() {
       <ClickParticleCanvas />
 
       {/* 独立置顶桌面伴侣小窗口 */}
-      {isFloatingOverlayOpen && (
+      {isFloatingOverlayOpen && !window.pywebview?.api?.spawn_floating_pet && (
         <FloatingDeskPetOverlay
           characterId={currentId}
           mood={mood}
@@ -390,7 +429,7 @@ export default function App() {
           backgroundColor: 'rgba(10, 13, 20, 0.85)',
           backdropFilter: 'blur(16px)',
           padding: '12px 24px',
-          display: 'flex',
+          display: windowMode === 'compact' ? 'none' : 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           position: 'sticky',
@@ -492,12 +531,12 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             onClick={() => {
-              // 1. 如果在 PyWebView / C++ 桌面宿主环境中，调用系统接口真正创建 OS 桌面级透明置顶窗口
-              if (window.pywebview && window.pywebview.api && window.pywebview.api.spawn_floating_pet) {
-                window.pywebview.api.spawn_floating_pet();
+              const desktopApi = window.pywebview?.api;
+              if (desktopApi?.spawn_floating_pet) {
+                if (isFloatingOverlayOpen) desktopApi.close_floating_pet?.();
+                else desktopApi.spawn_floating_pet();
               }
-              // 2. 同时在前端激活置顶伴侣
-              setIsFloatingOverlayOpen(!isFloatingOverlayOpen);
+              setIsFloatingOverlayOpen((open) => !open);
             }}
             style={{
               display: 'flex',
@@ -517,25 +556,23 @@ export default function App() {
             🐾 {isFloatingOverlayOpen ? '置顶小窗已激活' : '弹出独立桌宠小窗'}
           </button>
 
-          <button
-            onClick={() => setIsSimulatingStream(!isSimulatingStream)}
-            title={isSimulatingStream ? '暂停模拟后台 Token 消耗' : '开启模拟后台实时消耗'}
+          <span
+            title="账单只记录真实 API 响应的用量；无 usage 数据时会明确标记为估算"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 12px',
+              padding: '6px 10px',
               borderRadius: '8px',
-              fontSize: '0.78rem',
-              border: isSimulatingStream ? '1px solid #10B98150' : '1px solid #EF444450',
-              backgroundColor: isSimulatingStream ? '#10B98120' : '#EF444420',
-              color: isSimulatingStream ? '#34D399' : '#F87171',
-              cursor: 'pointer'
+              fontSize: '0.72rem',
+              color: '#34D399',
+              border: '1px solid #10B98150',
+              backgroundColor: '#10B98120',
+              whiteSpace: 'nowrap'
             }}
           >
-            {isSimulatingStream ? <Play size={14} /> : <Pause size={14} />}
-            {isSimulatingStream ? '心跳监听中' : '监听已暂停'}
-          </button>
+            ● 真实 API 计量
+          </span>
 
           <div
             style={{
@@ -596,17 +633,27 @@ export default function App() {
               alignItems: 'center',
               backgroundColor: char.cardBg,
               borderRadius: '24px',
-              padding: '24px',
+              padding: '14px',
               border: `1px solid ${char.borderTone}`,
-              maxWidth: '480px',
-              margin: '30px auto',
+              maxWidth: '420px',
+              margin: '12px auto',
               boxShadow: `0 20px 50px rgba(0,0,0,0.6), 0 0 30px ${char.glowColor}`
             }}
           >
             {/* 顶栏快速切换 */}
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontWeight: 700, color: char.accentColor, fontSize: '0.95rem' }}>{char.name}</span>
-              <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>余量: {fmtTokens(acc.balanceTokens)}</span>
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontWeight: 700, color: char.accentColor, fontSize: '0.9rem' }}>{char.name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>能量: {fmtTokens(acc.balanceTokens)}</span>
+                <button
+                  onClick={() => {
+                    if (window.pywebview?.api?.close_floating_pet) window.pywebview.api.close_floating_pet();
+                    else setWindowMode('full');
+                  }}
+                  title="关闭桌宠小窗"
+                  style={{ border: 0, background: 'rgba(255,255,255,0.08)', color: '#cbd5e1', borderRadius: '7px', width: '24px', height: '24px', cursor: 'pointer' }}
+                >×</button>
+              </div>
             </div>
 
             {/* 真实键鼠联动工作台 */}
@@ -616,7 +663,10 @@ export default function App() {
               speechText={speechText}
               tokensToday={acc.todayTokens}
               onPet={handlePetAvatar}
-              onOpenDashboard={() => setWindowMode('full')}
+              onOpenDashboard={() => {
+                if (window.pywebview?.api?.open_main_window) window.pywebview.api.open_main_window();
+                else setWindowMode('full');
+              }}
             />
 
             {/* 快速投喂操作 */}
@@ -664,7 +714,7 @@ export default function App() {
                 gap: '6px'
               }}
             >
-              <Zap size={14} color={char.color} /> 模拟消费 35K Token
+              <Zap size={14} color={char.color} /> 发送快捷任务
             </button>
           </div>
         ) : (
@@ -880,80 +930,81 @@ export default function App() {
 
               {/* 实时 AI 对话交互条 (支持与少女/桌宠实时发问和流式说话) */}
               <div style={{ width: '100%', zIndex: 3, marginBottom: '12px' }}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!userChatInput.trim() || isAiLoading) return;
-                    const prompt = userChatInput;
-                    setUserChatInput('');
-                    setIsAiLoading(true);
-                    setIsSpeaking(true);
-                    setMood('thinking');
-                    soundManager.playThinking();
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '7px' }}>
+                  <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 700 }}>💬 与 {char.name.split(' ')[0]} 对话</span>
+                  <button
+                    type="button"
+                    onClick={() => setChatHistories((prev) => ({ ...prev, [currentId]: [] }))}
+                    style={{ background: 'transparent', border: 0, color: '#64748b', cursor: 'pointer', fontSize: '0.68rem' }}
+                  >清空本机对话</button>
+                </div>
 
-                    aiService.sendPrompt({
-                      provider: currentId,
-                      prompt,
-                      systemPrompt: `你是 ${char.name}，具备 ${char.tag} 的特性。性格：${char.voiceStyle}。请用可爱、简练、生动的桌宠语气回答。`,
-                      onChunk: (chunk, full) => {
-                        setSpeechText(full);
-                      },
-                      onComplete: ({ fullText, tokens }) => {
-                        setIsAiLoading(false);
-                        setIsSpeaking(false);
-                        setMood('happy');
-                        soundManager.playPet();
-
-                        // 更新消费
-                        const costCalc = Number((tokens * char.tokenRate.avgPricePerToken).toFixed(4));
-                        setAccounts(prev => ({
-                          ...prev,
-                          [currentId]: {
-                            ...prev[currentId],
-                            balanceTokens: Math.max(0, prev[currentId].balanceTokens - tokens),
-                            todayTokens: prev[currentId].todayTokens + tokens,
-                            todayCostUSD: Number((prev[currentId].todayCostUSD + costCalc).toFixed(3))
-                          }
-                        }));
-                        setTimeout(() => setMood('idle'), 3000);
-                      }
-                    });
+                <div
+                  aria-live="polite"
+                  style={{
+                    display: 'flex', flexDirection: 'column', gap: '7px', maxHeight: '220px', overflowY: 'auto',
+                    padding: '8px', borderRadius: '12px', background: 'rgba(0,0,0,0.24)',
+                    border: '1px solid rgba(255,255,255,0.06)', marginBottom: '8px'
                   }}
-                  style={{ display: 'flex', gap: '6px' }}
                 >
+                  {currentChatMessages.length === 0 ? (
+                    <div style={{ color: '#64748b', textAlign: 'center', fontSize: '0.72rem', padding: '12px 4px' }}>
+                      对话内容和用量记录只保存在本机。先配置 API，再发送消息。
+                    </div>
+                  ) : currentChatMessages.slice(-12).map((message) => (
+                    <div
+                      key={message.id}
+                      style={{
+                        alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
+                        maxWidth: '92%', padding: '7px 10px', borderRadius: '10px',
+                        background: message.role === 'user' ? `${char.color}35` : 'rgba(255,255,255,0.06)',
+                        color: message.failed ? '#fca5a5' : '#e2e8f0', fontSize: '0.72rem', lineHeight: 1.45,
+                        whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'
+                      }}
+                    >
+                      {message.content || (message.pending ? '正在等待 API 响应…' : '')}
+                      {message.usageSource && (
+                        <div style={{ marginTop: '4px', color: '#64748b', fontSize: '0.63rem' }}>
+                          {message.model || char.modelFamily} · {fmtNum(message.tokens || 0)} tokens · {message.usageSource === 'api' ? 'API 返回用量' : '本地估算'}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '7px' }}>
+                  {['帮我规划今天的工作', '把一个复杂问题拆解成步骤', '陪我聊聊最近的灵感'].map((topic) => (
+                    <button
+                      key={topic}
+                      type="button"
+                      onClick={() => sendChatMessage(topic)}
+                      disabled={isAiLoading}
+                      style={{ padding: '4px 7px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.64rem' }}
+                    >{topic}</button>
+                  ))}
+                </div>
+
+                <form onSubmit={(e) => { e.preventDefault(); sendChatMessage(); }} style={{ display: 'flex', gap: '6px' }}>
                   <input
                     type="text"
                     value={userChatInput}
                     onChange={(e) => setUserChatInput(e.target.value)}
-                    placeholder={`和 ${char.name.split(' ')[0]} 实时对话...`}
-                    style={{
-                      flex: 1,
-                      padding: '7px 12px',
-                      borderRadius: '10px',
-                      backgroundColor: 'rgba(0,0,0,0.4)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#fff',
-                      fontSize: '0.75rem',
-                      outline: 'none'
-                    }}
+                    placeholder={`和 ${char.name.split(' ')[0]} 对话…`}
+                    style={{ flex: 1, padding: '7px 12px', borderRadius: '10px', backgroundColor: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem', outline: 'none' }}
                   />
                   <button
                     type="submit"
-                    disabled={isAiLoading}
-                    style={{
-                      padding: '7px 12px',
-                      borderRadius: '10px',
-                      backgroundColor: char.color,
-                      border: 'none',
-                      color: '#fff',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAiLoading ? '思考中' : '发送'}
-                  </button>
+                    disabled={isAiLoading || !userChatInput.trim()}
+                    style={{ padding: '7px 12px', borderRadius: '10px', backgroundColor: char.color, border: 'none', color: '#fff', fontSize: '0.75rem', fontWeight: 600, cursor: isAiLoading ? 'wait' : 'pointer', opacity: isAiLoading ? 0.7 : 1 }}
+                  >{isAiLoading ? '请求中…' : '发送'}</button>
                 </form>
+                <div style={{ marginTop: '7px' }}>
+                  <VoiceChatControls
+                    text={latestAssistantText}
+                    onTranscript={(transcript) => setUserChatInput((previous) => previous ? `${previous} ${transcript}` : transcript)}
+                    accentColor={char.accentColor}
+                  />
+                </div>
               </div>
 
               {/* 立绘形态与服饰切换 (完整支持 少女 / 萝莉 / 青年女性 / Q版萌宠 四种形态) */}
@@ -1118,7 +1169,7 @@ export default function App() {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: '0.75rem', marginBottom: '6px' }}>
-                    <span>剩余可用 Token 储备</span>
+                    <span>本地桌宠能量储备</span>
                     <Coins size={15} color={char.color} />
                   </div>
                   <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>
@@ -1205,7 +1256,8 @@ export default function App() {
               <div
                 style={{
                   display: 'flex',
-                  gap: '10px',
+                  gap: '6px',
+                  flexWrap: 'wrap',
                   borderBottom: '1px solid rgba(255,255,255,0.1)',
                   paddingBottom: '8px'
                 }}
@@ -1214,7 +1266,12 @@ export default function App() {
                   { id: 'pet', label: 'Token 投喂饲育', icon: Coffee },
                   { id: 'analytics', label: '模型费率与对比', icon: PieChart },
                   { id: 'billing', label: '调用流水审计', icon: History },
-                  { id: 'settings', label: '预算预警与配置', icon: Sliders }
+                  { id: 'settings', label: '预算预警与配置', icon: Sliders },
+                  { id: 'workspace', label: 'API 工作区', icon: Layers },
+                  { id: 'library', label: '文件保存区', icon: PlusCircle },
+                  { id: 'agent', label: 'Agent', icon: Cpu },
+                  { id: 'social', label: '角色社交', icon: Heart },
+                  { id: 'links', label: 'GitHub / 云盘', icon: Info }
                 ].map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
@@ -1226,13 +1283,13 @@ export default function App() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        padding: '8px 16px',
+                        padding: '7px 10px',
                         borderRadius: '10px',
                         border: 'none',
                         backgroundColor: isActive ? `${char.color}33` : 'transparent',
                         color: isActive ? '#ffffff' : '#94a3b8',
                         cursor: 'pointer',
-                        fontSize: '0.85rem',
+                        fontSize: '0.74rem',
                         fontWeight: isActive ? 600 : 400,
                         transition: 'all 0.2s',
                         outline: 'none'
@@ -1345,16 +1402,17 @@ export default function App() {
                   >
                     <div>
                       <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>
-                        🚀 一键体验高强度 Agent 任务调用
+                        🚀 快捷真实 API 任务
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                        触发拟人伴侣现场处理任务，查看实时立绘情绪变化、扣费与台词反馈
+                        点击后会实际调用当前角色 API，并按返回用量记录；未返回官方用量时会清楚标记为估算
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
-                        onClick={() => triggerManualCall(20000, '代码重构建议')}
-                        style={{
+                        disabled={isAiLoading}
+                        onClick={() => triggerManualCall('代码重构建议')}
+                        style={{ opacity: isAiLoading ? 0.55 : 1,
                           padding: '7px 12px',
                           borderRadius: '8px',
                           backgroundColor: 'rgba(255,255,255,0.08)',
@@ -1364,11 +1422,12 @@ export default function App() {
                           cursor: 'pointer'
                         }}
                       >
-                        测试小任务 (20K)
+                        代码重构建议
                       </button>
                       <button
-                        onClick={() => triggerManualCall(100000, '万行仓库深度架构推理')}
-                        style={{
+                        disabled={isAiLoading}
+                        onClick={() => triggerManualCall('万行仓库深度架构推理')}
+                        style={{ opacity: isAiLoading ? 0.55 : 1,
                           padding: '7px 14px',
                           borderRadius: '8px',
                           backgroundColor: `${char.color}35`,
@@ -1379,7 +1438,7 @@ export default function App() {
                           cursor: 'pointer'
                         }}
                       >
-                        ⚡ 极限压测 (100K)
+                        架构分析任务
                       </button>
                     </div>
                   </div>
@@ -1489,18 +1548,20 @@ export default function App() {
                           <th style={{ padding: '8px 10px' }}>模型</th>
                           <th style={{ padding: '8px 10px' }}>调用动作</th>
                           <th style={{ padding: '8px 10px' }}>Token 规模</th>
-                          <th style={{ padding: '8px 10px' }}>折合费用</th>
+                          <th style={{ padding: '8px 10px' }}>费用估算</th>
                           <th style={{ padding: '8px 10px' }}>状态</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {liveCallLog.map((log) => (
+                        {liveCallLog.length === 0 ? (
+                          <tr><td colSpan="6" style={{ padding: '18px', color: '#64748b', textAlign: 'center' }}>尚无真实 API 调用记录；成功调用后会在这里保存用量。</td></tr>
+                        ) : liveCallLog.map((log) => (
                           <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                             <td style={{ padding: '8px 10px', color: '#64748b' }}>{log.time}</td>
                             <td style={{ padding: '8px 10px', color: '#cbd5e1', fontWeight: 600 }}>{log.model}</td>
                             <td style={{ padding: '8px 10px', color: '#f1f5f9' }}>{log.action}</td>
-                            <td style={{ padding: '8px 10px', color: char.accentColor }}>{fmtNum(log.tokens)}</td>
-                            <td style={{ padding: '8px 10px', color: '#10B981' }}>${log.cost.toFixed(4)}</td>
+                            <td style={{ padding: '8px 10px', color: char.accentColor }}>{fmtNum(log.tokens)} <small style={{ color: '#64748b' }}>({log.usageSource === 'api' ? 'API' : '估算'})</small></td>
+                            <td style={{ padding: '8px 10px', color: '#10B981' }}>~${Number(log.cost || 0).toFixed(4)}</td>
                             <td style={{ padding: '8px 10px' }}>
                               <span style={{ padding: '2px 6px', borderRadius: '4px', backgroundColor: '#10B98120', color: '#34D399', fontSize: '0.7rem' }}>
                                 {log.status}
@@ -1581,59 +1642,111 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* API 秘钥配置 (支持填入实际 API Key 进行真实调用) */}
+                  {/* API 接口：各家官方协议 + 用户自定义本地兼容接口 */}
                   <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '6px' }}>
-                      🔑 真实 AI API Key 接入配置 (可选)
+                    <div style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '10px' }}>
+                      🔌 {char.name.split(' ')[0]} API 工作接口
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 0.7fr) 1.3fr', gap: '8px', marginBottom: '8px' }}>
+                      <label style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                        接口类型
+                        <select
+                          value={apiConfig.mode}
+                          onChange={(e) => {
+                            if (e.target.value === 'local') {
+                              updateApiConfig({ mode: 'local', protocol: 'openai', baseUrl: 'http://127.0.0.1:11434/v1' });
+                            } else {
+                              updateApiConfig({ ...DEFAULT_PROVIDER_CONFIGS[currentId], mode: 'official' });
+                            }
+                          }}
+                          style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}
+                        >
+                          <option value="official">官方接口</option>
+                          <option value="local">本地兼容接口（OpenAI API 格式）</option>
+                        </select>
+                      </label>
+                      <label style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                        模型名称
+                        <input
+                          value={apiConfig.model || ''}
+                          onChange={(e) => updateApiConfig({ model: e.target.value })}
+                          placeholder="例如 qwen-plus / llama3.1"
+                          style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.78rem' }}
+                        />
+                      </label>
+                    </div>
+                    <label style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                      {apiConfig.mode === 'local' ? '本地 API Base URL' : '官方 API Base URL'}
                       <input
+                        value={apiConfig.baseUrl || ''}
+                        onChange={(e) => updateApiConfig({ baseUrl: e.target.value })}
+                        placeholder={apiConfig.mode === 'local' ? '例如 http://127.0.0.1:11434/v1' : '官方 API 地址'}
+                        style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.78rem' }}
+                      />
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <input
+                        key={currentId}
                         type="password"
-                        placeholder={`输入 ${char.name.split(' ')[0]} 官方 API Key (留空使用离线智能体流式对话)...`}
+                        autoComplete="new-password"
+                        placeholder={apiConfig.mode === 'local' ? '本地服务 Key（可留空）' : `输入 ${char.name.split(' ')[0]} 官方 API Key`}
                         defaultValue={aiService.getApiKey(currentId)}
                         onChange={(e) => aiService.setApiKey(currentId, e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          backgroundColor: 'rgba(0,0,0,0.4)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: '#fff',
-                          fontSize: '0.8rem'
-                        }}
+                        style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.78rem' }}
                       />
-                      <button
-                        onClick={() => alert(`已为 ${char.name} 保存 API Key 配置！`)}
-                        style={{
-                          padding: '8px 14px',
-                          borderRadius: '8px',
-                          backgroundColor: char.color,
-                          border: 'none',
-                          color: '#fff',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        保存配置
-                      </button>
+                      <span style={{ alignSelf: 'center', fontSize: '0.68rem', color: '#34D399', whiteSpace: 'nowrap' }}>自动本机保存</span>
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                      Key 仅保存在本地浏览器/桌面客户端 localStorage 中，绝不上传第三方服务器。
-                    </span>
+                    <div style={{ fontSize: '0.68rem', lineHeight: 1.5, color: '#64748b', marginTop: '7px' }}>
+                      请求由本机网关转发到此处配置的接口；Key 仅保存在本机浏览器存储中。调用失败会显示错误，不会伪造回答或用量。
+                    </div>
                   </div>
 
-                  {/* 声音与台词风格设置 */}
+                  {/* API 语音输入、语音聊天和播报设置 */}
                   <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '6px' }}>
-                      伴侣性格音效与语音偏好
+                    <div style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '8px' }}>
+                      🎙 语音聊天 API
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      当前语调特征: <span style={{ color: char.accentColor }}>{char.voiceStyle}</span>
+                    <label style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
+                      语音 API Base URL
+                      <input value={voiceConfig.baseUrl} onChange={(e) => updateVoiceConfig({ baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px 9px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem' }} />
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '7px', marginTop: '8px' }}>
+                      <label style={{ color: '#94a3b8', fontSize: '0.68rem' }}>TTS 模型<input value={voiceConfig.speechModel} onChange={(e) => updateVoiceConfig({ speechModel: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} /></label>
+                      <label style={{ color: '#94a3b8', fontSize: '0.68rem' }}>语音<input value={voiceConfig.voice} onChange={(e) => updateVoiceConfig({ voice: e.target.value })} placeholder="alloy" style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} /></label>
+                      <label style={{ color: '#94a3b8', fontSize: '0.68rem' }}>转写模型<input value={voiceConfig.transcriptionModel} onChange={(e) => updateVoiceConfig({ transcriptionModel: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} /></label>
+                    </div>
+                    <input
+                      key="voice-api-key"
+                      type="password"
+                      autoComplete="new-password"
+                      defaultValue={aiService.getVoiceApiKey()}
+                      onChange={(e) => aiService.setVoiceApiKey(e.target.value)}
+                      placeholder="语音 API Key（配置后可用 API 录音转写与语音合成）"
+                      style={{ width: '100%', marginTop: '8px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem' }}
+                    />
+                    <div style={{ fontSize: '0.68rem', lineHeight: 1.5, color: '#64748b', marginTop: '6px' }}>
+                      配置 Key 后使用 API 语音识别与 TTS；没有 Key 时退回设备内置语音能力。角色语调设定：<span style={{ color: char.accentColor }}>{char.voiceStyle}</span>
                     </div>
                   </div>
+
                 </div>
               )}
+
+              {activeTab === 'workspace' && (
+                <WorkspacePanel
+                  character={char}
+                  provider={currentId}
+                  documents={documents}
+                  isChatBusy={isAiLoading}
+                  onOpenSettings={() => setActiveTab('settings')}
+                  onSend={sendChatMessage}
+                  onUsage={recordApiUsage}
+                />
+              )}
+              {activeTab === 'library' && <LibraryPanel documents={documents} setDocuments={setDocuments} accentColor={char.color} />}
+              {activeTab === 'agent' && <AgentPanel provider={currentId} character={char} characters={AI_CHARACTERS} documents={documents} onUsage={recordApiUsage} />}
+              {activeTab === 'social' && <SocialPanel characters={AI_CHARACTERS} onUsage={recordApiUsage} />}
+              {activeTab === 'links' && <LinksPanel />}
             </div>
           </div>
         )}
@@ -1644,7 +1757,7 @@ export default function App() {
         style={{
           borderTop: '1px solid rgba(255,255,255,0.06)',
           padding: '14px 24px',
-          display: 'flex',
+          display: windowMode === 'compact' ? 'none' : 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           fontSize: '0.75rem',
@@ -1656,8 +1769,8 @@ export default function App() {
           <span style={{ marginLeft: '12px' }}>支持 Claude · OpenAI · DeepSeek · Gemini 全模态接入</span>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <span>状态: 运行正常 (WebSocket 监听活跃)</span>
-          <span>延迟: 42ms</span>
+          <span>本机网关负责处理 API 请求</span>
+          <span>聊天与用量记录保存在本机</span>
         </div>
       </footer>
     </div>
