@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { AI_CHARACTERS, FOOD_ITEMS, MOCK_API_CALLS } from './constants/characters';
 import { AvatarRenderer } from './components/Avatars';
+import { LiveInteractiveAvatar } from './components/LiveInteractiveAvatar';
 import { BongoPetLive, FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
 import { soundManager } from './utils/soundManager';
@@ -757,20 +758,28 @@ export default function App() {
                 <span>{speechText}</span>
               </div>
 
-              {/* 核心立绘角色 */}
+              {/* 核心立绘角色 (实装视线跟随鼠标、多热区触碰回馈与眨眼骨骼动画) */}
               <div
-                onClick={handlePetAvatar}
                 style={{
                   zIndex: 2,
-                  cursor: 'pointer',
                   margin: '4px 0 10px 0',
                   display: 'flex',
                   justifyContent: 'center',
                   width: '100%'
                 }}
-                title="抚摸脑袋 / 点击互动"
               >
-                <AvatarRenderer characterId={currentId} mood={mood} outfit={selectedOutfit[currentId]} form={characterForm} size={270} />
+                <LiveInteractiveAvatar
+                  characterId={currentId}
+                  mood={mood}
+                  form={characterForm}
+                  speechText={speechText}
+                  size={280}
+                  onPet={handlePetAvatar}
+                  onPoke={() => {
+                    const line = char.dialogues.petting[0] || "呀，被你戳到脸颊了！";
+                    setSpeechText(line);
+                  }}
+                />
               </div>
 
               {/* 立绘形态与服饰切换 */}
