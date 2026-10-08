@@ -1,0 +1,8 @@
+node_modules/
+.vite/
+__pycache__/
+*.pyc
+build/
+*.spec
+.DS_Store
+AITokenPet-Windows-x64.zip
