@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { AI_CHARACTERS, FOOD_ITEMS, MOCK_API_CALLS } from './constants/characters';
-import { AvatarRenderer } from './components/Avatars';
-import { LiveInteractiveAvatar } from './components/LiveInteractiveAvatar';
+import { approvedAsset } from './constants/assets';
 import { LiveAnimeModel } from './components/LiveAnimeModel';
 import { BongoRealDesk } from './components/BongoRealDesk';
 import { BongoPetLive, FloatingDeskPetOverlay } from './components/BongoPetLive';
@@ -43,15 +42,20 @@ export default function App() {
   // 当前选中的 AI 角色 (默认选择看板娘小寻 DeepSeek)
   const [currentId, setCurrentId] = useState('deepseek');
   // 桌面宠物形态模式：'full' (综合大屏仪表盘), 'compact' (精简桌宠窗)
-  const [windowMode, setWindowMode] = useState('full');
+  const [windowMode, setWindowMode] = useState(() => (typeof window !== 'undefined' && window.location.hash === '#compact' ? 'compact' : 'full'));
   // 是否开启右下角独立置顶悬浮伴侣小窗口
   const [isFloatingOverlayOpen, setIsFloatingOverlayOpen] = useState(false);
   
   // 角色拟人状态
-  const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'crying' | 'thinking' | 'hammered'
+  const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'thinking'（点击只触发整体反应）
   const [characterForm, setCharacterForm] = useState('normal'); // 'normal' (少女立绘) | 'chibi' (Q版萌宠立绘)
+  // 切换角色或形态时：青年女性素材未通过质检则回退到少女形态（不静默显示错误的图）
+  useEffect(() => {
+    if (characterForm === 'mature' && !approvedAsset(`${currentId}_mature.png`)) {
+      setCharacterForm('normal');
+    }
+  }, [currentId, characterForm]);
   const [speechText, setSpeechText] = useState('');
-  const [currentProp, setCurrentProp] = useState('none'); // 'none' | 'hammer' | 'glove'
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [userChatInput, setUserChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -234,10 +238,10 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentId, isSimulatingStream, char]);
 
-  // 互动：摸摸头
-  const handlePetAvatar = () => {
+  // 互动：点击角色的整体反应（不区分身体部位，不涉及身体接触）
+  const handleCharacterClick = () => {
     setMood('happy');
-    const pets = char.dialogues.petting;
+    const pets = char.dialogues.idle;
     const line = pets[Math.floor(Math.random() * pets.length)];
     setSpeechText(line);
 
@@ -360,8 +364,8 @@ export default function App() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#0a0d14',
-        backgroundImage: `radial-gradient(circle at 50% 10%, ${char.glowColor}, transparent 45%), radial-gradient(circle at 90% 80%, rgba(15, 23, 42, 0.8), transparent 50%)`,
+        backgroundColor: windowMode === 'compact' ? 'transparent' : '#0a0d14',
+        backgroundImage: windowMode === 'compact' ? 'none' : `radial-gradient(circle at 50% 10%, ${char.glowColor}, transparent 45%), radial-gradient(circle at 90% 80%, rgba(15, 23, 42, 0.8), transparent 50%)`,
         color: '#f8fafc',
         transition: 'all 0.5s ease',
         display: 'flex',
@@ -378,12 +382,13 @@ export default function App() {
           mood={mood}
           speechText={speechText}
           tokensToday={acc.todayTokens}
-          onPet={handlePetAvatar}
+          onPet={handleCharacterClick}
           onClose={() => setIsFloatingOverlayOpen(false)}
         />
       )}
 
       {/* 顶部多角色皮肤切换与状态栏 */}
+{windowMode !== 'compact' && (
       <header
         style={{
           borderBottom: `1px solid ${char.borderTone}`,
@@ -584,6 +589,7 @@ export default function App() {
           </div>
         </div>
       </header>
+      )}
 
       {/* 主体布局 */}
       <main style={{ flex: 1, padding: windowMode === 'full' ? '24px' : '16px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
@@ -594,13 +600,13 @@ export default function App() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              backgroundColor: char.cardBg,
+              backgroundColor: 'transparent',
               borderRadius: '24px',
-              padding: '24px',
-              border: `1px solid ${char.borderTone}`,
-              maxWidth: '480px',
-              margin: '30px auto',
-              boxShadow: `0 20px 50px rgba(0,0,0,0.6), 0 0 30px ${char.glowColor}`
+              padding: '6px',
+              border: 'none',
+              maxWidth: 'none',
+              margin: '0 auto',
+              boxShadow: 'none'
             }}
           >
             {/* 顶栏快速切换 */}
@@ -615,7 +621,7 @@ export default function App() {
               mood={mood}
               speechText={speechText}
               tokensToday={acc.todayTokens}
-              onPet={handlePetAvatar}
+              onPet={handleCharacterClick}
               onOpenDashboard={() => setWindowMode('full')}
             />
 
@@ -772,13 +778,13 @@ export default function App() {
                   characterId={currentId}
                   form={characterForm}
                   mood={mood}
-                  currentProp={currentProp}
                   isSpeaking={isSpeaking}
                   size={290}
+                  onClick={handleCharacterClick}
                 />
               </div>
 
-              {/* 道具互动与情绪快捷栏 (举手高兴 / 被打哭 / 小锤子 / 猫爪手套) */}
+              {/* 动作快捷栏：举手高兴（整体动作，不涉及身体接触） */}
               <div style={{ width: '100%', zIndex: 3, marginBottom: '10px', display: 'flex', gap: '6px', justifyContent: 'center' }}>
                 <button
                   onClick={() => {
@@ -800,81 +806,6 @@ export default function App() {
                   title="举手欢呼跳跃"
                 >
                   🙋‍♀️ 举手高兴
-                </button>
-
-                <button
-                  onClick={() => {
-                    setMood('crying');
-                    soundManager.playTap(false);
-                    setSpeechText("呜呜呜... 为什么敲我嘛，好痛痛，眼泪都要流出来了...");
-                    setTimeout(() => setMood('idle'), 3000);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                    border: '1px solid rgba(59, 130, 246, 0.4)',
-                    color: '#93c5fd',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  title="委屈流泪"
-                >
-                  😭 委屈哭泣
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentProp('hammer');
-                    setMood('hammered');
-                    soundManager.playTap(true);
-                    setSpeechText("Duang！小锤子敲到头顶啦，眼冒金星啦...");
-                    setTimeout(() => {
-                      setCurrentProp('none');
-                      setMood('crying');
-                      setTimeout(() => setMood('idle'), 2000);
-                    }, 1400);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(234, 179, 8, 0.2)',
-                    border: '1px solid rgba(234, 179, 8, 0.4)',
-                    color: '#fde047',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  title="挥动小锤子"
-                >
-                  🔨 小锤子
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentProp('glove');
-                    setMood('happy');
-                    soundManager.playPet();
-                    setSpeechText("哇～好软呼呼的猫爪手套抚摸！好舒服喵～");
-                    setTimeout(() => {
-                      setCurrentProp('none');
-                      setMood('idle');
-                    }, 2200);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(168, 85, 247, 0.2)',
-                    border: '1px solid rgba(168, 85, 247, 0.4)',
-                    color: '#d8b4fe',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  title="猫爪手套"
-                >
-                  🐾 猫爪手套
                 </button>
               </div>
 
@@ -956,39 +887,44 @@ export default function App() {
                 </form>
               </div>
 
-              {/* 立绘形态与服饰切换 (完整支持 少女 / 萝莉 / 青年女性 / Q版萌宠 四种形态) */}
+              {/* 立绘形态与服饰切换 (少女 / 青年女性 / Q版萌宠 三种形态；萝莉形态不做) */}
               <div style={{ width: '100%', zIndex: 2, marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '14px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 四大形态切换</span>
-                    {/* 少女 / 萝莉 / 青年女性 / Q版 4态切换药丸按钮 */}
+                    <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 形态切换</span>
+                    {/* 少女 / 青年女性 / Q版 三态切换（萝莉形态不做） */}
                     <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '2px', gap: '2px' }}>
                       {[
-                        { id: 'normal', label: '少女' },
-                        { id: 'loli', label: '萝莉' },
-                        { id: 'mature', label: '青年女性' },
-                        { id: 'chibi', label: 'Q版' }
-                      ].map(f => (
-                        <button
-                          key={f.id}
-                          onClick={() => {
-                            soundManager.playSwitch();
-                            setCharacterForm(f.id);
-                          }}
-                          style={{
-                            fontSize: '0.68rem',
-                            padding: '2px 7px',
-                            borderRadius: '10px',
-                            border: 'none',
-                            backgroundColor: characterForm === f.id ? char.color : 'transparent',
-                            color: '#fff',
-                            cursor: 'pointer',
-                            fontWeight: characterForm === f.id ? 600 : 400
-                          }}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
+                        { id: 'normal', label: '少女', file: `${currentId}.png` },
+                        { id: 'mature', label: '青年女性', file: `${currentId}_mature.png` },
+                        { id: 'chibi', label: 'Q版', file: `${currentId}_chibi.png` }
+                      ].map(f => {
+                        // 素材未通过质检的形态不可选（显示待生成）；Q版为现有旧素材，保持可用
+                        const available = f.id === 'chibi' || !!approvedAsset(f.file);
+                        return (
+                          <button
+                            key={f.id}
+                            disabled={!available}
+                            onClick={() => {
+                              soundManager.playSwitch();
+                              setCharacterForm(f.id);
+                            }}
+                            title={available ? '' : '该角色的这个形态素材待生成'}
+                            style={{
+                              fontSize: '0.68rem',
+                              padding: '2px 7px',
+                              borderRadius: '10px',
+                              border: 'none',
+                              backgroundColor: characterForm === f.id ? char.color : 'transparent',
+                              color: available ? '#fff' : '#64748b',
+                              cursor: available ? 'pointer' : 'not-allowed',
+                              fontWeight: characterForm === f.id ? 600 : 400
+                            }}
+                          >
+                            {f.label}{available ? '' : '（待生成）'}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1014,12 +950,14 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {(char.outfits || [{ id: 'default', name: '默认服饰', desc: '经典造型' }]).map((outfit) => (
+                  {(char.outfits || [{ id: 'default', name: '默认服饰', desc: '经典造型' }]).map((outfit, idx) => (
                     <button
                       key={outfit.id}
+                      disabled={idx > 0}
                       onClick={() => setSelectedOutfit(p => ({ ...p, [currentId]: outfit.id }))}
                       style={{
                         padding: '4px 10px',
+                        opacity: idx > 0 ? 0.5 : 1,
                         borderRadius: '8px',
                         fontSize: '0.72rem',
                         cursor: 'pointer',
@@ -1027,9 +965,9 @@ export default function App() {
                         backgroundColor: selectedOutfit[currentId] === outfit.id ? `${char.color}40` : 'rgba(255,255,255,0.04)',
                         color: selectedOutfit[currentId] === outfit.id ? '#fff' : '#cbd5e1'
                       }}
-                      title={outfit.desc}
+                      title={idx > 0 ? `${outfit.desc}（服装素材待生成）` : outfit.desc}
                     >
-                      ✨ {outfit.name}
+                      ✨ {outfit.name}{idx > 0 ? '（待生成）' : ''}
                     </button>
                   ))}
                 </div>
@@ -1038,7 +976,7 @@ export default function App() {
               {/* 快捷互动小动作条 */}
               <div style={{ display: 'flex', gap: '10px', width: '100%', zIndex: 2, marginBottom: '16px' }}>
                 <button
-                  onClick={handlePetAvatar}
+                  onClick={handleCharacterClick}
                   style={{
                     flex: 1,
                     display: 'flex',
@@ -1056,7 +994,7 @@ export default function App() {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <Heart size={14} /> 抚摸安慰
+                  <Heart size={14} /> 打个招呼
                 </button>
                 <button
                   onClick={() => triggerManualCall(40000, '思维推演连击')}
@@ -1589,7 +1527,7 @@ export default function App() {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input
                         type="password"
-                        placeholder={`输入 ${char.name.split(' ')[0]} 官方 API Key (留空使用离线智能体流式对话)...`}
+                        placeholder={`输入 ${char.name.split(' ')[0]} 的 API Key（当前为离线演示版本，暂不会发送）`}
                         defaultValue={aiService.getApiKey(currentId)}
                         onChange={(e) => aiService.setApiKey(currentId, e.target.value)}
                         style={{
@@ -1619,7 +1557,7 @@ export default function App() {
                       </button>
                     </div>
                     <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                      Key 仅保存在本地浏览器/桌面客户端 localStorage 中，绝不上传第三方服务器。
+                      当前为离线演示版本，不会发起任何真实 API 请求，Key 不会发送到任何服务器。Key 以明文保存在本机 localStorage 中，正式版将改为系统凭据库。
                     </span>
                   </div>
 
@@ -1640,6 +1578,7 @@ export default function App() {
       </main>
 
       {/* 底部信息栏 */}
+{windowMode !== 'compact' && (
       <footer
         style={{
           borderTop: '1px solid rgba(255,255,255,0.06)',
@@ -1660,6 +1599,7 @@ export default function App() {
           <span>延迟: 42ms</span>
         </div>
       </footer>
+      )}
     </div>
   );
 }

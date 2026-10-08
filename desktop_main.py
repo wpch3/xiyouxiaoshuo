@@ -36,7 +36,7 @@ class DesktopPetAPI:
             title='AI Token Pet · 独立桌宠',
             url=(dist_index if os.path.exists(dist_index) else 'http://localhost:5173') + '#compact',
             width=380,
-            height=340,
+            height=500,
             resizable=False,
             frameless=True,
             on_top=True,

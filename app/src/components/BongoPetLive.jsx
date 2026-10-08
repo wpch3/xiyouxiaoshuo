@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { soundManager } from '../utils/soundManager';
 import { BongoRealDesk } from './BongoRealDesk';
+import { characterImage } from '../constants/assets';
 
 // 独立悬浮桌面伴侣容器组件
 export const FloatingDeskPetOverlay = ({ 
@@ -201,7 +202,7 @@ export const BongoPetLive = ({
     } catch (err) {}
   };
 
-  const chibiImg = `/characters/${characterId}_chibi.png`;
+  const chibiImg = characterImage(`${characterId}_chibi.png`);
 
   return (
     <div 

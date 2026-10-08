@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { soundManager } from '../utils/soundManager';
+import { characterImage } from '../constants/assets';
 
 /**
  * 经典开源 Bongo Cat 真实键鼠联动工作台
@@ -76,7 +77,7 @@ export const BongoRealDesk = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const chibiImg = `/characters/${characterId}_chibi.png`;
+  const chibiImg = characterImage(`${characterId}_chibi.png`);
 
   // 计算鼠标垫上的鼠标与右爪物理偏移 (px)
   const mousePadOffsetX = (mousePos.x - 0.5) * 36;
@@ -134,7 +135,7 @@ export const BongoRealDesk = ({
           transition: 'transform 0.1s ease-out',
           transform: activeKey ? 'translateY(3px) scale(0.99)' : mood === 'happy' ? 'translateY(-6px) scale(1.03)' : 'translateY(0)'
         }}
-        title="点击摸摸头！在键盘按 W A S D 或打字，桌宠爪爪精准同步！"
+        title="点击桌宠打个招呼 · 在键盘按 W A S D 或打字，桌宠爪爪同步"
       >
         <img
           src={chibiImg}

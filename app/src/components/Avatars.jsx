@@ -1,24 +1,25 @@
 import React from 'react';
+import { characterImage } from '../constants/assets';
 
 export const CharacterImage = ({ characterId, mood = 'idle', outfit = 'default', form = 'normal', size = 320 }) => {
   const normalMap = {
-    deepseek: '/characters/deepseek.png',
-    claude: '/characters/claude.png',
-    openai: '/characters/openai.png',
-    gemini: '/characters/gemini.png',
-    qwen: '/characters/qwen.png',
-    kimi: '/characters/kimi.png',
-    grok: '/characters/grok.png'
+    deepseek: characterImage('deepseek.png'),
+    claude: characterImage('claude.png'),
+    openai: characterImage('openai.png'),
+    gemini: characterImage('gemini.png'),
+    qwen: characterImage('qwen.png'),
+    kimi: characterImage('kimi.png'),
+    grok: characterImage('grok.png')
   };
 
   const chibiMap = {
-    deepseek: '/characters/deepseek_chibi.png',
-    claude: '/characters/claude_chibi.png',
-    openai: '/characters/openai_chibi.png',
-    gemini: '/characters/gemini_chibi.png',
-    qwen: '/characters/qwen_chibi.png',
-    kimi: '/characters/kimi_chibi.png',
-    grok: '/characters/grok_chibi.png'
+    deepseek: characterImage('deepseek_chibi.png'),
+    claude: characterImage('claude_chibi.png'),
+    openai: characterImage('openai_chibi.png'),
+    gemini: characterImage('gemini_chibi.png'),
+    qwen: characterImage('qwen_chibi.png'),
+    kimi: characterImage('kimi_chibi.png'),
+    grok: characterImage('grok_chibi.png')
   };
 
   const isChibi = form === 'chibi';
