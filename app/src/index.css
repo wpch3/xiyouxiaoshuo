@@ -158,3 +158,43 @@ body {
   z-index: 99999;
   filter: drop-shadow(0 12px 30px rgba(0,0,0,0.8));
 }
+
+/* 动态桌宠与敲键盘动画效果 */
+@keyframes bongoPetIdle {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(-1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes bongoPetHappy {
+  0% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.04); }
+  100% { transform: translateY(0px) scale(1); }
+}
+
+.bongo-pet-idle {
+  animation: bongoPetIdle 2.8s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.bongo-pet-happy {
+  animation: bongoPetHappy 0.6s ease-in-out infinite alternate;
+  transform-origin: center bottom;
+}
+
+.bongo-pet-stage {
+  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.5));
+}
+
+/* 点击与抚摸水波扩散动画 */
+@keyframes rippleWave {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+

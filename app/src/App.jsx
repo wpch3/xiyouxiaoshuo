@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { AI_CHARACTERS, FOOD_ITEMS, MOCK_API_CALLS } from './constants/characters';
 import { AvatarRenderer } from './components/Avatars';
+import { BongoPetLive } from './components/BongoPetLive';
+import { ClickParticleCanvas } from './components/ClickParticleCanvas';
+import { soundManager } from './utils/soundManager';
 import {
   Sparkles,
   Zap,
@@ -234,7 +237,8 @@ export default function App() {
       [currentId]: Math.min(100, prev[currentId] + 2)
     }));
 
-    // 放一点温和彩屑
+    // 放一点温和彩屑与萌系音效
+    soundManager.playPet();
     try {
       confetti({
         particleCount: 25,
@@ -252,6 +256,7 @@ export default function App() {
   // 互动：投喂食物 / 充能
   const handleFeedFood = (food) => {
     setMood('happy');
+    soundManager.playFeed();
     const feedings = char.dialogues.feeding;
     const line = feedings[Math.floor(Math.random() * feedings.length)];
     setSpeechText(line);
@@ -291,6 +296,7 @@ export default function App() {
   // 手动测试快速消耗模拟（如模拟发起一次 Agent 重度思考）
   const triggerManualCall = (tokensToConsume = 50000, actionName = '执行深度自省推理任务') => {
     setMood('thinking');
+    soundManager.playThinking();
     setSpeechText(currentId === 'deepseek' ? "<think> 正在逐层反思推理验证最优逻辑解... </think>" : "正在全力计算中，请稍候片刻...");
 
     setTimeout(() => {
@@ -352,6 +358,9 @@ export default function App() {
         flexDirection: 'column'
       }}
     >
+      {/* 全局点击彩色微粒子光晕特效 */}
+      <ClickParticleCanvas />
+
       {/* 顶部多角色皮肤切换与状态栏 */}
       <header
         style={{
@@ -422,7 +431,10 @@ export default function App() {
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentId(item.id)}
+                onClick={() => {
+                  soundManager.playSwitch();
+                  setCurrentId(item.id);
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
