@@ -1,16 +1,10 @@
-"""
-AI Token Pet - 桌面独立运行客户端 (Desktop Host)
-基于 Python + PyWebView 原生无边框桌面窗口，可无缝打包为 AITokenPet.exe
-"""
 import os
 import sys
 import webview
 
 def get_resource_path(relative_path):
-    """获取程序运行资源目录（兼容 PyInstaller 打包后的 _MEIPASS 路径与开发源码路径）"""
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
-    # 本地开发环境
     base_dir = os.path.dirname(os.path.abspath(__file__))
     candidate1 = os.path.join(base_dir, relative_path)
     if os.path.exists(candidate1):
@@ -21,29 +15,42 @@ def get_resource_path(relative_path):
     return candidate1
 
 class DesktopPetAPI:
-    """提供给桌宠前端直接调用的本地系统接口类，由 js_api 注入"""
     def __init__(self):
-        self._window = None
+        self._main_window = None
+        self._pet_window = None
 
-    def set_window(self, window):
-        self._window = window
+    def set_main_window(self, window):
+        self._main_window = window
 
-    def minimize_window(self):
-        if self._window:
-            self._window.minimize()
+    def spawn_floating_pet(self):
+        """真正弹出独立的 Windows 原生桌面置顶悬浮伴侣小窗口（完全独立于主窗口，直接在 Windows 桌面上悬浮）"""
+        if self._pet_window is not None:
+            return
 
-    def close_window(self):
-        if self._window:
-            self._window.destroy()
+        dist_index = get_resource_path(os.path.join('dist', 'index.html'))
+        if not os.path.exists(dist_index):
+            dist_index = get_resource_path(os.path.join('app', 'dist', 'index.html'))
 
-    def set_always_on_top(self, flag: bool):
-        if self._window:
-            self._window.on_top = flag
+        # 创建独立的置顶、无边框、支持半透明的桌宠子窗口
+        self._pet_window = webview.create_window(
+            title='AI Token Pet · 独立桌宠',
+            url=(dist_index if os.path.exists(dist_index) else 'http://localhost:5173') + '#compact',
+            width=380,
+            height=340,
+            resizable=False,
+            frameless=True,
+            on_top=True,
+            transparent=True,
+            easy_drag=True
+        )
+
+    def close_floating_pet(self):
+        if self._pet_window:
+            self._pet_window.destroy()
+            self._pet_window = None
 
 def main():
     dist_index = get_resource_path(os.path.join('dist', 'index.html'))
-    
-    # 本地如果尚未打包，尝试寻找 app/dist
     if not os.path.exists(dist_index):
         dist_index = get_resource_path(os.path.join('app', 'dist', 'index.html'))
 
@@ -53,15 +60,15 @@ def main():
         title='AI Token Pet · 拟人桌面消费伴侣',
         url=dist_index if os.path.exists(dist_index) else 'http://localhost:5173',
         js_api=api,
-        width=1180,
-        height=820,
+        width=1200,
+        height=840,
         resizable=True,
-        min_size=(420, 640),
+        min_size=(480, 600),
         frameless=False,
         easy_drag=True
     )
     
-    api.set_window(window)
+    api.set_main_window(window)
     webview.start(debug=False)
 
 if __name__ == '__main__':

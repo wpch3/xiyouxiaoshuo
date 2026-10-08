@@ -3,9 +3,12 @@ import confetti from 'canvas-confetti';
 import { AI_CHARACTERS, FOOD_ITEMS, MOCK_API_CALLS } from './constants/characters';
 import { AvatarRenderer } from './components/Avatars';
 import { LiveInteractiveAvatar } from './components/LiveInteractiveAvatar';
+import { LiveAnimeModel } from './components/LiveAnimeModel';
+import { BongoRealDesk } from './components/BongoRealDesk';
 import { BongoPetLive, FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
 import { soundManager } from './utils/soundManager';
+import { aiService } from './utils/aiService';
 import {
   Sparkles,
   Zap,
@@ -45,9 +48,13 @@ export default function App() {
   const [isFloatingOverlayOpen, setIsFloatingOverlayOpen] = useState(false);
   
   // 角色拟人状态
-  const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'sleepy' | 'thinking'
+  const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'crying' | 'thinking' | 'hammered'
   const [characterForm, setCharacterForm] = useState('normal'); // 'normal' (少女立绘) | 'chibi' (Q版萌宠立绘)
   const [speechText, setSpeechText] = useState('');
+  const [currentProp, setCurrentProp] = useState('none'); // 'none' | 'hammer' | 'glove'
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [userChatInput, setUserChatInput] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const [favorability, setFavorability] = useState({
     deepseek: 98,
     claude: 92,
@@ -573,7 +580,7 @@ export default function App() {
 
       {/* 主体布局 */}
       <main style={{ flex: 1, padding: windowMode === 'full' ? '24px' : '16px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
-        {/* 精简模式下只展示核心宠物和快速喂食条 */}
+        {/* 精简模式下切换为真正的 Bongo 实时键鼠工作台 */}
         {windowMode === 'compact' ? (
           <div
             style={{
@@ -584,7 +591,7 @@ export default function App() {
               borderRadius: '24px',
               padding: '24px',
               border: `1px solid ${char.borderTone}`,
-              maxWidth: '460px',
+              maxWidth: '480px',
               margin: '30px auto',
               boxShadow: `0 20px 50px rgba(0,0,0,0.6), 0 0 30px ${char.glowColor}`
             }}
@@ -595,29 +602,15 @@ export default function App() {
               <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>余量: {fmtTokens(acc.balanceTokens)}</span>
             </div>
 
-            {/* 对话气泡 */}
-            <div
-              className="speech-bubble"
-              style={{
-                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                border: `1px solid ${char.color}60`,
-                borderColor: `${char.color}60`,
-                padding: '10px 18px',
-                borderRadius: '16px',
-                marginBottom: '10px',
-                fontSize: '0.85rem',
-                maxWidth: '90%',
-                textAlign: 'center',
-                color: '#f1f5f9'
-              }}
-            >
-              💬 {speechText}
-            </div>
-
-            {/* 角色立体拟人立绘 */}
-            <div onClick={handlePetAvatar} style={{ cursor: 'pointer', position: 'relative' }} title="点击摸摸头增加好感度！">
-              <AvatarRenderer characterId={currentId} mood={mood} form={characterForm} size={250} />
-            </div>
+            {/* 真实键鼠联动工作台 */}
+            <BongoRealDesk
+              characterId={currentId}
+              mood={mood}
+              speechText={speechText}
+              tokensToday={acc.todayTokens}
+              onPet={handlePetAvatar}
+              onOpenDashboard={() => setWindowMode('full')}
+            />
 
             {/* 快速投喂操作 */}
             <div style={{ display: 'flex', gap: '8px', marginTop: '14px', width: '100%', justifyContent: 'center' }}>
@@ -758,7 +751,7 @@ export default function App() {
                 <span>{speechText}</span>
               </div>
 
-              {/* 核心立绘角色 (实装视线跟随鼠标、多热区触碰回馈与眨眼骨骼动画) */}
+              {/* 核心立绘角色 (实装眼睛瞳孔物理视线跟随、眨眼、张嘴说话、举手欢呼与被打哭流泪) */}
               <div
                 style={{
                   zIndex: 2,
@@ -768,18 +761,190 @@ export default function App() {
                   width: '100%'
                 }}
               >
-                <LiveInteractiveAvatar
+                <LiveAnimeModel
                   characterId={currentId}
                   mood={mood}
-                  form={characterForm}
-                  speechText={speechText}
-                  size={280}
-                  onPet={handlePetAvatar}
-                  onPoke={() => {
-                    const line = char.dialogues.petting[0] || "呀，被你戳到脸颊了！";
-                    setSpeechText(line);
-                  }}
+                  currentProp={currentProp}
+                  isSpeaking={isSpeaking}
+                  size={290}
                 />
+              </div>
+
+              {/* 道具互动与情绪快捷栏 (举手高兴 / 被打哭 / 小锤子 / 猫爪手套) */}
+              <div style={{ width: '100%', zIndex: 3, marginBottom: '10px', display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                <button
+                  onClick={() => {
+                    setMood('happy');
+                    soundManager.playPet();
+                    setSpeechText("哇！好开心呀主公！我们一起加油！");
+                    setTimeout(() => setMood('idle'), 2500);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(244, 63, 94, 0.2)',
+                    border: '1px solid rgba(244, 63, 94, 0.4)',
+                    color: '#fda4af',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                  title="举手欢呼跳跃"
+                >
+                  🙋‍♀️ 举手高兴
+                </button>
+
+                <button
+                  onClick={() => {
+                    setMood('crying');
+                    soundManager.playTap(false);
+                    setSpeechText("呜呜呜... 为什么敲我嘛，好痛痛，眼泪都要流出来了...");
+                    setTimeout(() => setMood('idle'), 3000);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                    color: '#93c5fd',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                  title="委屈流泪"
+                >
+                  😭 委屈哭泣
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentProp('hammer');
+                    setMood('crying');
+                    soundManager.playTap(true);
+                    setSpeechText("啊！小锤子敲脑袋啦，好痛！");
+                    setTimeout(() => {
+                      setCurrentProp('none');
+                      setMood('idle');
+                    }, 1800);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(234, 179, 8, 0.2)',
+                    border: '1px solid rgba(234, 179, 8, 0.4)',
+                    color: '#fde047',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                  title="挥动小锤子"
+                >
+                  🔨 小锤子
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentProp('glove');
+                    setMood('happy');
+                    soundManager.playPet();
+                    setSpeechText("哇～好软呼呼的猫爪手套抚摸！好舒服喵～");
+                    setTimeout(() => {
+                      setCurrentProp('none');
+                      setMood('idle');
+                    }, 2200);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                    border: '1px solid rgba(168, 85, 247, 0.4)',
+                    color: '#d8b4fe',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                  title="猫爪手套"
+                >
+                  🐾 猫爪手套
+                </button>
+              </div>
+
+              {/* 实时 AI 对话交互条 (支持与少女/桌宠实时发问和流式说话) */}
+              <div style={{ width: '100%', zIndex: 3, marginBottom: '12px' }}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!userChatInput.trim() || isAiLoading) return;
+                    const prompt = userChatInput;
+                    setUserChatInput('');
+                    setIsAiLoading(true);
+                    setIsSpeaking(true);
+                    setMood('thinking');
+                    soundManager.playThinking();
+
+                    aiService.sendPrompt({
+                      provider: currentId,
+                      prompt,
+                      systemPrompt: `你是 ${char.name}，具备 ${char.tag} 的特性。性格：${char.voiceStyle}。请用可爱、简练、生动的桌宠语气回答。`,
+                      onChunk: (chunk, full) => {
+                        setSpeechText(full);
+                      },
+                      onComplete: ({ fullText, tokens }) => {
+                        setIsAiLoading(false);
+                        setIsSpeaking(false);
+                        setMood('happy');
+                        soundManager.playPet();
+
+                        // 更新消费
+                        const costCalc = Number((tokens * char.tokenRate.avgPricePerToken).toFixed(4));
+                        setAccounts(prev => ({
+                          ...prev,
+                          [currentId]: {
+                            ...prev[currentId],
+                            balanceTokens: Math.max(0, prev[currentId].balanceTokens - tokens),
+                            todayTokens: prev[currentId].todayTokens + tokens,
+                            todayCostUSD: Number((prev[currentId].todayCostUSD + costCalc).toFixed(3))
+                          }
+                        }));
+                        setTimeout(() => setMood('idle'), 3000);
+                      }
+                    });
+                  }}
+                  style={{ display: 'flex', gap: '6px' }}
+                >
+                  <input
+                    type="text"
+                    value={userChatInput}
+                    onChange={(e) => setUserChatInput(e.target.value)}
+                    placeholder={`和 ${char.name.split(' ')[0]} 实时对话...`}
+                    style={{
+                      flex: 1,
+                      padding: '7px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(0,0,0,0.4)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      color: '#fff',
+                      fontSize: '0.75rem',
+                      outline: 'none'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAiLoading}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: char.color,
+                      border: 'none',
+                      color: '#fff',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {isAiLoading ? '思考中' : '发送'}
+                  </button>
+                </form>
               </div>
 
               {/* 立绘形态与服饰切换 */}
@@ -1407,6 +1572,48 @@ export default function App() {
                         当前消耗已达 {((acc.todayCostUSD / acc.budgetLimitUSD) * 100).toFixed(1)}%
                       </span>
                     </div>
+                  </div>
+
+                  {/* API 秘钥配置 (支持填入实际 API Key 进行真实调用) */}
+                  <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '6px' }}>
+                      🔑 真实 AI API Key 接入配置 (可选)
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="password"
+                        placeholder={`输入 ${char.name.split(' ')[0]} 官方 API Key (留空使用离线智能体流式对话)...`}
+                        defaultValue={aiService.getApiKey(currentId)}
+                        onChange={(e) => aiService.setApiKey(currentId, e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(0,0,0,0.4)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#fff',
+                          fontSize: '0.8rem'
+                        }}
+                      />
+                      <button
+                        onClick={() => alert(`已为 ${char.name} 保存 API Key 配置！`)}
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          backgroundColor: char.color,
+                          border: 'none',
+                          color: '#fff',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        保存配置
+                      </button>
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                      Key 仅保存在本地浏览器/桌面客户端 localStorage 中，绝不上传第三方服务器。
+                    </span>
                   </div>
 
                   {/* 声音与台词风格设置 */}
