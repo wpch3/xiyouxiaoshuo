@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { soundManager } from '../utils/soundManager';
+import { BongoRealDesk } from './BongoRealDesk';
 
 // 独立悬浮桌面伴侣容器组件
 export const FloatingDeskPetOverlay = ({ 
@@ -97,18 +98,14 @@ export const FloatingDeskPetOverlay = ({
         </button>
       </div>
 
-      {/* 内部渲染纯透明打字小猫/小动物桌宠 */}
+      {/* 内部渲染纯透明打字小猫/小动物桌宠 (完全采用 BongoRealDesk 真实键鼠与摇杆工作台) */}
       <div
         style={{
-          backgroundColor: 'rgba(15, 23, 42, 0.3)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '0 0 20px 20px',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          padding: '8px 12px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
+          backgroundColor: 'transparent',
+          padding: '0px'
         }}
       >
-        <BongoPetLive
+        <BongoRealDesk
           characterId={characterId}
           mood={mood}
           speechText={speechText}
