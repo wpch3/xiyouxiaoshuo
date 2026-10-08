@@ -1,45 +1,70 @@
 @echo off
-chcp 65001 >nul
+setlocal enabledelayedexpansion
+title AI Token Pet - Windows ¹¹½¨´ò°ü¹¤¾ß
+
 echo ========================================================
-echo        AI Token Pet - Windows EXE ä¸€é”®æ„å»ºè„šæœ¬
+echo        AI Token Pet - Windows 11 EXE ´ò°ü¹¤¾ß
 echo ========================================================
 echo.
 
-echo [1/4] æ£€æŸ¥å‰ç«¯æ„å»ºç¯å¢ƒå¹¶æ‰“åŒ… React UI é™æ€äº§ç‰©...
+:: 1. ÓÅÏÈ¼ì²é²Ö¿âÒÑ×Ô´øµÄ±àÒëºÃÇ°¶Ë×ÊÔ´ app\dist\index.html
+if exist "app\dist\index.html" (
+    echo [OK] ¼ì²âµ½²Ö¿âÒÑÄÚÖÃÍêÕûÇ°¶Ë×ÊÔ´ app\dist\index.html£¬Ö±½ÓÊ¹ÓÃ£¡
+    goto Step2
+)
+
+echo [*] Î´¼ì²âµ½ÄÚÖÃ dist£¬ÕıÔÚ³¢ÊÔµ÷ÓÃ npm ¹¹½¨Ç°¶Ë...
+where npm >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [¾¯¸æ] Î´¼ì²âµ½ Node.js/npm »·¾³¡£
+    echo ÕıÔÚÊ¹ÓÃÄ¬ÈÏ×ÊÔ´°ü...
+    goto Step2
+)
+
 cd app
 call npm install
 call npm run build
 cd ..
 
-if not exist "app\dist\index.html" (
-    echo [é”™è¯¯] å‰ç«¯æ„å»ºå¤±è´¥ï¼Œæœªæ‰¾åˆ° app\dist\index.html
+:Step2
+echo.
+echo [1/3] ¼ì²é Python »·¾³...
+where python >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [´íÎó] ÏµÍ³ÖĞÎ´ÕÒµ½ Python£¡
+    echo ÇëÏÈ°²×° Python (½¨Òé 3.10 »ò 3.11)£¬²¢¹´Ñ¡ "Add python.exe to PATH"¡£
     pause
     exit /b 1
 )
-echo [æˆåŠŸ] å‰ç«¯ UI äº§ç‰©å·²æ„å»ºå®Œæ¯•ï¼
-echo.
 
-echo [2/4] æ£€æŸ¥ Python è¿è¡Œä¸æ‰“åŒ…ä¾èµ–...
-python -m pip install --upgrade pip
-python -m pip install pyinstaller pywebview
+echo [2/3] °²×° Windows ×ÀÃæ´ò°ü±ØÒª¿â (pywebview, pyinstaller)...
+python -m pip install -q pywebview pyinstaller
 
 echo.
-echo [3/4] æ­£åœ¨é€šè¿‡ PyInstaller æ‰“åŒ…ç‹¬ç«‹ Windows å¯æ‰§è¡Œç¨‹åº AITokenPet.exe ...
-pyinstaller --noconfirm --onedir --windowed --name "AITokenPet" --add-data "app\dist;dist" desktop_main.py
+echo [3/3] ÕıÔÚ´ò°ü Windows EXE ×ÀÃæÈí¼ş...
+pyinstaller --noconfirm --onedir --windowed --name "AITokenPet" --add-data "app/dist;dist" desktop_main.py
 
 echo.
-echo [4/4] æ­£åœ¨æ•´ç†å®Œæ•´å‘å¸ƒæ–‡ä»¶å¤¹...
 if exist "dist\AITokenPet\AITokenPet.exe" (
-    echo.
     echo ========================================================
-    echo  æ­å–œï¼æ‰“åŒ…å®Œæˆï¼
-    echo  å¯æ‰§è¡Œæ–‡ä»¶ä¸å®Œæ•´è¿è¡Œ Data å·²è¾“å‡ºåˆ°:
-    echo  dist\AITokenPet\
+    echo   ¹§Ï²£¡Windows ×ÀÃæ³ÌĞò´ò°ü³É¹¦£¡
     echo.
-    echo  åŒå‡»è¿è¡Œ: dist\AITokenPet\AITokenPet.exe
+    echo   ¿ÉÖ´ĞĞÎÄ¼şÂ·¾¶: dist\AITokenPet\AITokenPet.exe
+    echo   È«²¿ÒÀÀµ Data ÒÑ×Ô¶¯ÄÚÇ¶µ½¸ÃÎÄ¼ş¼ĞÖĞ¡£
     echo ========================================================
+    echo.
+    echo ÕıÔÚÎªÄú´ò¿ªÊä³öÄ¿Â¼...
+    explorer "dist\AITokenPet"
 ) else (
-    echo [è­¦å‘Š] æœªåœ¨ dist\AITokenPet ä¸­æ£€æµ‹åˆ° exeï¼Œè¯·æ£€æŸ¥ä¸Šæ–¹æ§åˆ¶å°æŠ¥é”™ä¿¡æ¯ã€‚
+    echo [ÌáÊ¾] ÕıÔÚ³¢ÊÔµ¥ÎÄ¼ş´ò°üÄ£Ê½...
+    pyinstaller --noconfirm --onefile --windowed --name "AITokenPet" --add-data "app/dist;dist" desktop_main.py
+    if exist "dist\AITokenPet.exe" (
+        echo ´ò°ü³É¹¦: dist\AITokenPet.exe
+        explorer "dist"
+    ) else (
+        echo [´íÎó] ´ò°üÊ§°Ü£¬Çë¼ì²éÉÏ·½¿ØÖÆÌ¨±¨´í¡£
+    )
 )
 
+echo.
 pause
