@@ -33,23 +33,47 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  // 当前选中的 AI 角色
-  const [currentId, setCurrentId] = useState('claude');
-  // 桌面宠物形态模式：'full' (综合大屏仪表盘), 'compact' (精简桌宠窗), 'mini' (右下角极简悬浮宠)
+  // 当前选中的 AI 角色 (默认选择看板娘小寻 DeepSeek)
+  const [currentId, setCurrentId] = useState('deepseek');
+  // 桌面宠物形态模式：'full' (综合大屏仪表盘), 'compact' (精简桌宠窗)
   const [windowMode, setWindowMode] = useState('full');
   
   // 角色拟人状态
   const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'sleepy' | 'thinking'
   const [speechText, setSpeechText] = useState('');
   const [favorability, setFavorability] = useState({
-    claude: 85,
-    openai: 92,
-    deepseek: 96,
-    gemini: 88
+    deepseek: 98,
+    claude: 92,
+    openai: 89,
+    gemini: 91,
+    qwen: 95,
+    kimi: 93,
+    grok: 86
+  });
+
+  // 服饰系统：记录各角色当前穿戴的服饰
+  const [selectedOutfit, setSelectedOutfit] = useState({
+    deepseek: 'maid',
+    claude: 'scholar',
+    openai: 'maid',
+    gemini: 'magical',
+    qwen: 'hanfu',
+    kimi: 'trench',
+    grok: 'biker'
   });
   
   // 各角色的动态 Token 与消费账户状态
   const [accounts, setAccounts] = useState({
+    deepseek: {
+      balanceTokens: 4890000,
+      totalSpentTokens: 18950000,
+      totalCostUSD: 26.15,
+      todayTokens: 1250000,
+      todayCostUSD: 1.71,
+      health: 98,
+      budgetLimitUSD: 50.0,
+      quotaWarnPercent: 85
+    },
     claude: {
       balanceTokens: 1420500,
       totalSpentTokens: 8579400,
@@ -70,16 +94,6 @@ export default function App() {
       budgetLimitUSD: 150.0,
       quotaWarnPercent: 75
     },
-    deepseek: {
-      balanceTokens: 4890000,
-      totalSpentTokens: 18950000,
-      totalCostUSD: 26.15,
-      todayTokens: 1250000,
-      todayCostUSD: 1.71,
-      health: 98,
-      budgetLimitUSD: 50.0,
-      quotaWarnPercent: 85
-    },
     gemini: {
       balanceTokens: 3200000,
       totalSpentTokens: 9800000,
@@ -89,6 +103,36 @@ export default function App() {
       health: 92,
       budgetLimitUSD: 80.0,
       quotaWarnPercent: 80
+    },
+    qwen: {
+      balanceTokens: 2800000,
+      totalSpentTokens: 11200000,
+      totalCostUSD: 17.92,
+      todayTokens: 780000,
+      todayCostUSD: 1.25,
+      health: 95,
+      budgetLimitUSD: 60.0,
+      quotaWarnPercent: 80
+    },
+    kimi: {
+      balanceTokens: 2150000,
+      totalSpentTokens: 6420000,
+      totalCostUSD: 15.40,
+      todayTokens: 520000,
+      todayCostUSD: 1.24,
+      health: 94,
+      budgetLimitUSD: 70.0,
+      quotaWarnPercent: 80
+    },
+    grok: {
+      balanceTokens: 1780000,
+      totalSpentTokens: 8900000,
+      totalCostUSD: 44.50,
+      todayTokens: 890000,
+      todayCostUSD: 4.45,
+      health: 91,
+      budgetLimitUSD: 100.0,
+      quotaWarnPercent: 75
     }
   });
 
@@ -679,7 +723,53 @@ export default function App() {
                 }}
                 title="抚摸脑袋 / 点击互动"
               >
-                <AvatarRenderer characterId={currentId} mood={mood} size={250} />
+                <AvatarRenderer characterId={currentId} mood={mood} outfit={selectedOutfit[currentId]} size={270} />
+              </div>
+
+              {/* 情绪与服饰换装快捷条 */}
+              <div style={{ width: '100%', zIndex: 2, marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '14px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 服饰换装系统</span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {['idle', 'happy', 'thinking', 'sleepy'].map((m) => (
+                      <button
+                        key={m}
+                        onClick={(e) => { e.stopPropagation(); setMood(m); }}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          border: mood === m ? `1px solid ${char.color}` : '1px solid transparent',
+                          backgroundColor: mood === m ? `${char.color}35` : 'rgba(255,255,255,0.05)',
+                          color: mood === m ? '#fff' : '#94a3b8',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {m === 'idle' ? '待机' : m === 'happy' ? '开心' : m === 'thinking' ? '思考' : '困倦'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {(char.outfits || [{ id: 'default', name: '默认服饰', desc: '经典造型' }]).map((outfit) => (
+                    <button
+                      key={outfit.id}
+                      onClick={() => setSelectedOutfit(p => ({ ...p, [currentId]: outfit.id }))}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        border: selectedOutfit[currentId] === outfit.id ? `1px solid ${char.color}` : '1px solid rgba(255,255,255,0.1)',
+                        backgroundColor: selectedOutfit[currentId] === outfit.id ? `${char.color}40` : 'rgba(255,255,255,0.04)',
+                        color: selectedOutfit[currentId] === outfit.id ? '#fff' : '#cbd5e1'
+                      }}
+                      title={outfit.desc}
+                    >
+                      ✨ {outfit.name}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* 快捷互动小动作条 */}
