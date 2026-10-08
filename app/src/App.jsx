@@ -40,6 +40,7 @@ export default function App() {
   
   // 角色拟人状态
   const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'sleepy' | 'thinking'
+  const [characterForm, setCharacterForm] = useState('normal'); // 'normal' (少女立绘) | 'chibi' (Q版萌宠立绘)
   const [speechText, setSpeechText] = useState('');
   const [favorability, setFavorability] = useState({
     deepseek: 98,
@@ -568,7 +569,7 @@ export default function App() {
 
             {/* 角色立体拟人立绘 */}
             <div onClick={handlePetAvatar} style={{ cursor: 'pointer', position: 'relative' }} title="点击摸摸头增加好感度！">
-              <AvatarRenderer characterId={currentId} mood={mood} size={250} />
+              <AvatarRenderer characterId={currentId} mood={mood} form={characterForm} size={250} />
             </div>
 
             {/* 快速投喂操作 */}
@@ -723,20 +724,55 @@ export default function App() {
                 }}
                 title="抚摸脑袋 / 点击互动"
               >
-                <AvatarRenderer characterId={currentId} mood={mood} outfit={selectedOutfit[currentId]} size={270} />
+                <AvatarRenderer characterId={currentId} mood={mood} outfit={selectedOutfit[currentId]} form={characterForm} size={270} />
               </div>
 
-              {/* 情绪与服饰换装快捷条 */}
+              {/* 立绘形态与服饰切换 */}
               <div style={{ width: '100%', zIndex: 2, marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '14px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 服饰换装系统</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 形态 & 服饰</span>
+                    {/* 少女立绘 / Q版切换药丸按钮 */}
+                    <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '2px' }}>
+                      <button
+                        onClick={() => setCharacterForm('normal')}
+                        style={{
+                          fontSize: '0.68rem',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          backgroundColor: characterForm === 'normal' ? char.color : 'transparent',
+                          color: '#fff',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        少女立绘
+                      </button>
+                      <button
+                        onClick={() => setCharacterForm('chibi')}
+                        style={{
+                          fontSize: '0.68rem',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          backgroundColor: characterForm === 'chibi' ? char.color : 'transparent',
+                          color: '#fff',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Q版萌宠
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 情绪微表情切换 */}
                   <div style={{ display: 'flex', gap: '4px' }}>
                     {['idle', 'happy', 'thinking', 'sleepy'].map((m) => (
                       <button
                         key={m}
                         onClick={(e) => { e.stopPropagation(); setMood(m); }}
                         style={{
-                          fontSize: '0.7rem',
+                          fontSize: '0.68rem',
                           padding: '2px 6px',
                           borderRadius: '6px',
                           border: mood === m ? `1px solid ${char.color}` : '1px solid transparent',

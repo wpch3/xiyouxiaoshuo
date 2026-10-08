@@ -1,7 +1,7 @@
 import React from 'react';
 
-export const CharacterImage = ({ characterId, mood = 'idle', outfit = 'default', size = 320 }) => {
-  const imageMap = {
+export const CharacterImage = ({ characterId, mood = 'idle', outfit = 'default', form = 'normal', size = 320 }) => {
+  const normalMap = {
     deepseek: '/characters/deepseek.png',
     claude: '/characters/claude.png',
     openai: '/characters/openai.png',
@@ -11,14 +11,27 @@ export const CharacterImage = ({ characterId, mood = 'idle', outfit = 'default',
     grok: '/characters/grok.png'
   };
 
-  const imgSrc = imageMap[characterId] || imageMap.deepseek;
+  const chibiMap = {
+    deepseek: '/characters/deepseek_chibi.png',
+    claude: '/characters/claude_chibi.png',
+    openai: '/characters/openai_chibi.png',
+    gemini: '/characters/gemini_chibi.png',
+    qwen: '/characters/qwen_chibi.png',
+    kimi: '/characters/kimi_chibi.png',
+    grok: '/characters/grok_chibi.png'
+  };
+
+  const isChibi = form === 'chibi';
+  const imgSrc = isChibi 
+    ? (chibiMap[characterId] || chibiMap.deepseek) 
+    : (normalMap[characterId] || normalMap.deepseek);
 
   return (
     <div
       style={{
         position: 'relative',
         width: size,
-        height: size * 1.25,
+        height: isChibi ? size : size * 1.25,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -40,7 +53,7 @@ export const CharacterImage = ({ characterId, mood = 'idle', outfit = 'default',
             ? 'drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4)) brightness(0.85) grayscale(0.2)'
             : 'drop-shadow(0 15px 30px rgba(0, 0, 0, 0.65))',
           transform: mood === 'happy' 
-            ? 'scale(1.04) translateY(-8px)' 
+            ? 'scale(1.05) translateY(-8px)' 
             : mood === 'thinking' 
             ? 'scale(0.97)' 
             : mood === 'sleepy'
@@ -51,14 +64,14 @@ export const CharacterImage = ({ characterId, mood = 'idle', outfit = 'default',
         className="character-img-breathing"
       />
 
-      {/* 情绪状态挂件 */}
+      {/* 情绪微表现悬浮标 */}
       {mood === 'thinking' && (
         <div
           style={{
             position: 'absolute',
-            top: '15px',
-            right: '15px',
-            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+            top: '12px',
+            right: '12px',
+            backgroundColor: 'rgba(15, 23, 42, 0.92)',
             border: '1px solid rgba(59, 130, 246, 0.5)',
             boxShadow: '0 0 15px rgba(59, 130, 246, 0.35)',
             padding: '4px 12px',
@@ -109,6 +122,6 @@ export const CharacterImage = ({ characterId, mood = 'idle', outfit = 'default',
   );
 };
 
-export const AvatarRenderer = ({ characterId, mood = 'idle', outfit = 'default', size = 300 }) => {
-  return <CharacterImage characterId={characterId} mood={mood} outfit={outfit} size={size} />;
+export const AvatarRenderer = ({ characterId, mood = 'idle', outfit = 'default', form = 'normal', size = 300 }) => {
+  return <CharacterImage characterId={characterId} mood={mood} outfit={outfit} form={form} size={size} />;
 };
