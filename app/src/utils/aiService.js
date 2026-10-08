@@ -1,8 +1,22 @@
 /**
- * 真实与模拟多协议 AI API 客户端引擎
- * 支持：DeepSeek / Claude (Anthropic) / OpenAI / Gemini / Qwen
- * 包含：真实 API Key 设置、实时打字流式返回 (Streaming)、Token 消耗精准统计与错误处理
+ * 对话服务（当前为离线演示模式）
+ *
+ * 安全约束（热修，见 docs/TAKEOVER_AUDIT.md §4.1）：
+ * - 当前版本不发起任何真实 API 请求，Key 不会离开本机。
+ * - 真实请求只允许发往厂商自己的域名（白名单）。未列入白名单的厂商永远不会收到 Key。
+ * - 正式版本将改为后端代理 + 系统凭据库（见审计文档 §7 阶段 1）。
  */
+
+// 总开关：离线演示阶段保持 false。
+const LIVE_API_ENABLED = false;
+
+// 白名单：厂商 -> 唯一允许的端点与模型。
+// Claude、Gemini、Kimi、Grok、Qwen 暂未适配，不在白名单内，因此永远不会发起请求。
+const LIVE_ENDPOINTS = {
+  deepseek: { url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat' },
+  openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' }
+};
+
 class AITokenPetService {
   constructor() {
     this.apiKeys = {
@@ -25,37 +39,28 @@ class AITokenPetService {
     return this.apiKeys[provider] || '';
   }
 
-  // 发起真实的 LLM 请求或本地高质量模拟流式交互
+  // 发起真实请求（仅在总开关开启、厂商在白名单内、且已配置 Key 时），否则走离线演示
   async sendPrompt({ provider, prompt, systemPrompt, onChunk, onComplete, onError }) {
     const key = this.getApiKey(provider);
+    const target = LIVE_ENDPOINTS[provider];
 
-    // 1. 如果用户配置了真实 API Key，发起真实的 HTTP 请求
-    if (key && key.trim().length > 5) {
+    // 1. 真实请求（当前默认关闭）
+    if (LIVE_API_ENABLED && target && key && key.trim().length > 5) {
       try {
-        let endpoint = 'https://api.deepseek.com/v1/chat/completions';
-        let headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`
-        };
-        let body = {
-          model: provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt || '你是一只活泼可爱的桌面伴侣，用简短生动的语气回答我。' },
-            { role: 'user', content: prompt }
-          ],
-          stream: true
-        };
-
-        if (provider === 'openai') {
-          endpoint = 'https://api.openai.com/v1/chat/completions';
-        } else if (provider === 'qwen') {
-          endpoint = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
-        }
-
-        const response = await fetch(endpoint, {
+        const response = await fetch(target.url, {
           method: 'POST',
-          headers,
-          body: JSON.stringify(body)
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+          },
+          body: JSON.stringify({
+            model: target.model,
+            messages: [
+              { role: 'system', content: systemPrompt || '你是一只活泼可爱的桌面伴侣，用简短生动的语气回答我。' },
+              { role: 'user', content: prompt }
+            ],
+            stream: true
+          })
         });
 
         if (!response.ok) {
@@ -90,11 +95,11 @@ class AITokenPetService {
         if (onComplete) onComplete({ fullText, tokens: Math.max(fullText.length * 2, totalTokens) });
         return;
       } catch (err) {
-        console.warn('调用真实 API 失败，降级为内置智能体流式应答:', err);
+        console.warn('调用真实 API 失败，降级为离线演示:', err);
       }
     }
 
-    // 2. 本地自建智能体流式响应引擎 (即使断网或没填 Key 也能真正流式返回)
+    // 2. 离线演示：流式输出固定台词（不会回答问题，仅用于界面演示）
     const mockResponses = [
       `收到主人的指令啦！正在调动全域算力进行分析... 逻辑链已推演完毕，随时听候您的差遣哦！✨`,
       `哼哼～主人刚才打字好快，我刚才数了一下，一秒钟至少敲了5个按键呢！今天我也在元气满满地守护你！`,
