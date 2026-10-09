@@ -478,3 +478,33 @@
   animation: petFloat 1.2s ease-in-out infinite;
 }
 .avatar-state-sparkle { color: #9cc7ff; }
+
+/* Layered rig (part-split portraits) */
+.pet-rig {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.pet-rig-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transition: opacity 0.06s linear;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.pet-rig-sway {
+  transform-origin: 50% 7%;
+  animation: petBangsSway 5.4s ease-in-out infinite;
+}
+
+@keyframes petBangsSway {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  30% { transform: rotate(1.1deg) translateX(1px); }
+  62% { transform: rotate(-1.1deg) translateX(-1px); }
+}

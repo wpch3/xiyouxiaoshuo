@@ -2,6 +2,8 @@ import React, { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRoot } from 'react-dom/client';
 import { LiveAnimeModel } from './LiveAnimeModel';
+import { LayeredPetRig } from './LayeredPetRig';
+import { getPetRig } from '../constants/petRig';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -87,5 +89,44 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
       root.render(<LiveAnimeModel characterId="deepseek" form="mature" activeTool="pointer" />);
     });
     expect(container.querySelector('.pet-portrait-image').getAttribute('src')).toBe('/characters/deepseek_mature_live.png');
+  });
+});
+
+describe('分层立绘 rig（拆件）', () => {
+  it('小寻少女形态使用四层拆件而不是单张图', () => {
+    const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
+    const rig = stage.querySelector('.pet-rig');
+    expect(rig).not.toBeNull();
+    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(4);
+    expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_nobangs.png');
+  });
+
+  it('说话时嘴部口型层切换，眨眼计时器驱动眼睑层', () => {
+    vi.useFakeTimers();
+    try {
+      const rigDef = getPetRig('deepseek', 'normal');
+      act(() => {
+        root.render(<LayeredPetRig rig={rigDef} isSpeaking />);
+      });
+      const mouth = container.querySelector('.pet-rig-mouth_open, .pet-rig-layer[src="/characters/deepseek_layers/mouth_open.png"]');
+      const lids = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/eyelids.png"]');
+      expect(mouth.style.opacity).toBe('0');
+      act(() => { vi.advanceTimersByTime(200); });
+      expect(mouth.style.opacity).toBe('1');
+      let blinked = false;
+      for (let i = 0; i < 40 && !blinked; i += 1) {
+        act(() => { vi.advanceTimersByTime(300); });
+        blinked = lids.style.opacity === '1';
+      }
+      expect(blinked).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('其他角色/形态仍回退到单张立绘', () => {
+    const stage = render({ characterId: 'claude', form: 'normal', activeTool: 'pointer' });
+    expect(stage.querySelector('.pet-rig')).toBeNull();
+    expect(stage.querySelector('.pet-portrait-image').tagName).toBe('IMG');
   });
 });

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BrainCircuit, Sparkles } from 'lucide-react';
 import { soundManager } from '../utils/soundManager';
+import { getPetRig } from '../constants/petRig';
+import { LayeredPetRig } from './LayeredPetRig';
 
 const getPortraitPath = (characterId, form) => {
   if (characterId === 'deepseek') {
@@ -35,6 +37,7 @@ export const LiveAnimeModel = ({
   const [isPetting, setIsPetting] = useState(false);
   const [imageSrc, setImageSrc] = useState(getPortraitPath(characterId, form));
   const fallbackImage = `/characters/${characterId}.png`;
+  const rig = getPetRig(characterId, form);
   const height = size * 1.5;
 
   useEffect(() => {
@@ -146,20 +149,18 @@ export const LiveAnimeModel = ({
         className={`pet-pose-layer ${isPetting ? 'is-petting' : ''} ${mood === 'happy' ? 'is-happy' : ''} ${mood === 'hammered' ? 'is-hit' : ''} ${isSpeaking ? 'is-speaking' : ''}`}
         style={{ transform: `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg)` }}
       >
-        <img
-          className="pet-portrait-image"
-          src={imageSrc}
-          alt={`${characterId} 桌宠立绘`}
-          draggable="false"
-          onError={() => {
-            if (imageSrc !== fallbackImage) setImageSrc(fallbackImage);
-          }}
-        />
-        {characterId === 'deepseek' && form === 'normal' && (
-          <div className="pet-blink-overlay" aria-hidden="true">
-            <span />
-            <span />
-          </div>
+        {rig ? (
+          <LayeredPetRig rig={rig} isSpeaking={isSpeaking} className="pet-portrait-image" />
+        ) : (
+          <img
+            className="pet-portrait-image"
+            src={imageSrc}
+            alt={`${characterId} 桌宠立绘`}
+            draggable="false"
+            onError={() => {
+              if (imageSrc !== fallbackImage) setImageSrc(fallbackImage);
+            }}
+          />
         )}
       </div>
 
