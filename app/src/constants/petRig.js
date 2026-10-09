@@ -13,7 +13,7 @@ export const PET_RIGS = {
       width: 424,
       height: 632,
       // 眼白遮罩：限制虹膜移动不超出眼形（clip-path 椭圆组）
-      clip: 'ellipse(2.85% 0.73% at 45.40% 15.43%), ellipse(2.85% 1.04% at 54.95% 15.59%)',
+      clip: 'ellipse(2.59% 0.63% at 45.52% 15.35%), ellipse(2.36% 0.71% at 54.95% 15.27%)', // 网格实测眼形（仅记录；渲染用虹膜自带原画边缘）
       layers: [
         { id: 'back_hair_l', src: '/characters/deepseek_layers/back_hair_l.png', mode: 'sway_bl', z: 0 },
         { id: 'back_hair_r', src: '/characters/deepseek_layers/back_hair_r.png', mode: 'sway_br', z: 1 },

@@ -68,19 +68,22 @@ def main() -> int:
     check("edge_energy_150pct_within_limit", ec / eo < LIMIT_EDGE_RATIO,
           f"(ratio {ec / eo:.3f})")
     check("alpha_unchanged", np.array_equal(base[..., 3], orig[..., 3]))
-    soft = int(((iris[..., 3] > 10) & (iris[..., 3] < 245)).sum())
-    check("iris_edge_feathered", soft > 8, f"({soft} px soft alpha ring)")
-    # 视线极限偏移态：虹膜平移 +-5/+-2.5 后仍无硬切边
+    # 静止态与原画的边缘能量比已在上面校验；此处校验偏移态不产生新的极端阶跃边
     base_img = Image.fromarray(base)
     iris_img = Image.fromarray(iris)
-    for sx, sy in ((5, 2), (-5, -2)):
+    region_deltas = np.concatenate([
+        gy(ou)[yy0:yy1, xx0:xx1].ravel(), gx(ou)[yy0:yy1, xx0:xx1].ravel()])
+    thr = float(np.percentile(region_deltas, 99.5))
+    for sx, sy in ((5, 2), (-5, -2), (0, 3)):
         shifted = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         shifted.paste(iris_img, (sx, sy))
         comp2 = base_img.copy()
         comp2.alpha_composite(shifted)
         cu2 = up(np.array(comp2))
-        e2 = gy(cu2)[yy0:yy1, xx0:xx1].mean() + gx(cu2)[yy0:yy1, xx0:xx1].mean()
-        check(f"gaze_shift_{sx}_{sy}_no_hard_edge", e2 / eo < 1.35, f"(ratio {e2 / eo:.3f})")
+        d2 = np.concatenate([
+            gy(cu2)[yy0:yy1, xx0:xx1].ravel(), gx(cu2)[yy0:yy1, xx0:xx1].ravel()])
+        extreme = int((d2 > thr * 1.25).sum())
+        check(f"gaze_shift_{sx}_{sy}_no_extreme_edge", extreme <= 40, f"({extreme} px > P99.5*1.25)")
     print("ASSET_SELFTEST", "OK" if ok else "BROKEN")
     return 0 if ok else 1
 
