@@ -6,7 +6,7 @@ export const DEFAULT_PROVIDER_CONFIGS = {
   deepseek: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
   claude: { mode: 'official', protocol: 'anthropic', baseUrl: 'https://api.anthropic.com/v1', model: 'claude-3-5-sonnet-latest' },
   openai: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
-  gemini: { mode: 'official', protocol: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.0-flash' },
+  gemini: { mode: 'official', protocol: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-3.8-flash' },
   qwen: { mode: 'official', protocol: 'openai', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' },
   kimi: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k' },
   grok: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.x.ai/v1', model: 'grok-3-mini' },
@@ -31,7 +31,18 @@ const safeWriteJson = (key, value) => {
 
 class AITokenPetService {
   constructor() {
-    this.configs = safeReadJson(CONFIG_STORAGE_KEY, {});
+    const savedConfigs = safeReadJson(CONFIG_STORAGE_KEY, {});
+    this.configs = savedConfigs && typeof savedConfigs === 'object' && !Array.isArray(savedConfigs)
+      ? savedConfigs
+      : {};
+    // 迁移此前保存的、已下线的 Gemini 默认模型；保留用户自定义的其他模型。
+    if (this.configs.gemini?.model === 'gemini-2.0-flash' && (this.configs.gemini.mode || 'official') === 'official') {
+      this.configs = {
+        ...this.configs,
+        gemini: { ...this.configs.gemini, model: DEFAULT_PROVIDER_CONFIGS.gemini.model },
+      };
+      safeWriteJson(CONFIG_STORAGE_KEY, this.configs);
+    }
     this.apiKeys = Object.fromEntries(
       Object.keys(DEFAULT_PROVIDER_CONFIGS).map((provider) => [
         provider,

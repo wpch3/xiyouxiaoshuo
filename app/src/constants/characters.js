@@ -152,9 +152,9 @@ export const AI_CHARACTERS = {
   },
   gemini: {
     id: 'gemini',
-    name: '杰米妮 (Gemini 1.5)',
+    name: '杰米妮 (Gemini 3.8)',
     title: '紫发猫耳 · 星辰魔法少女',
-    modelFamily: 'Gemini 1.5 Pro / Flash',
+    modelFamily: 'Gemini 3.8 Flash',
     color: '#9B72CB',
     secondaryColor: '#7C3AED',
     accentColor: '#FBBF24',
