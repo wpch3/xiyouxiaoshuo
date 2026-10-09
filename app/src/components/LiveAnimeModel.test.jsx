@@ -147,7 +147,10 @@ describe('分层立绘 rig（拆件）', () => {
     });
     const iris = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/iris.png"]');
     const brows = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/brows.png"]');
-    expect(iris.style.transform).toContain('translate(4.9px, 1.4px)');
+    const gazeMatch = iris.style.transform.match(/translate\(([-0-9.]+)px, ([-0-9.]+)px\)/);
+    expect(gazeMatch).not.toBeNull();
+    expect(Number(gazeMatch[1]).toFixed(2)).toBe('4.90');
+    expect(Number(gazeMatch[2]).toFixed(2)).toBe('1.40');
     expect(getPetRig('deepseek', 'normal').clip).toContain('ellipse(');
     expect(brows.style.transform).toBe('translateY(-2.5px)');
     act(() => {
