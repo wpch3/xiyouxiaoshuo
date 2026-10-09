@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AI_CHARACTERS, FOOD_ITEMS } from './constants/characters';
+import { TOOL_ART } from './constants/toolArt';
 import { LiveAnimeModel } from './components/LiveAnimeModel';
 import { BongoRealDesk } from './components/BongoRealDesk';
 import { FloatingDeskPetOverlay } from './components/BongoPetLive';
@@ -802,8 +803,8 @@ export default function App() {
               <div className="pet-tool-dock" style={{ zIndex: 3, '--pet-accent': char.color }} aria-label="桌宠互动工具">
                 {[
                   { id: 'pointer', label: '观察', icon: <MousePointer2 size={23} strokeWidth={1.8} /> },
-                  { id: 'pet', label: '手抚摸', image: '/tools/petting-hand.svg' },
-                  { id: 'hammer', label: '小锤子', image: '/tools/hammer.svg' },
+                  { id: 'pet', label: '手抚摸', image: TOOL_ART.pet },
+                  { id: 'hammer', label: '小锤子', image: TOOL_ART.hammer },
                 ].map((tool) => (
                   <button
                     key={tool.id}

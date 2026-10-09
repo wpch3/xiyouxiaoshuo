@@ -7,26 +7,8 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 // （刘海/双侧发摆动、眼睑眨眼、嘴部口型、虹膜视线、眉毛情绪），
 // 对应拆件清单 PET_RIGS。
 export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, mood = 'idle', className = '', fallbackSrc = '' }) => {
-  const [isBlinking, setIsBlinking] = useState(false);
   const [isBroken, setIsBroken] = useState(false);
   const [mouthOpen, setMouthOpen] = useState(false);
-
-  useEffect(() => {
-    let blinkTimer;
-    let hideTimer;
-    const schedule = () => {
-      blinkTimer = window.setTimeout(() => {
-        setIsBlinking(true);
-        hideTimer = window.setTimeout(() => setIsBlinking(false), 150);
-        schedule();
-      }, 2600 + Math.random() * 2600);
-    };
-    schedule();
-    return () => {
-      window.clearTimeout(blinkTimer);
-      window.clearTimeout(hideTimer);
-    };
-  }, []);
 
   useEffect(() => {
     if (!isSpeaking) {
@@ -51,9 +33,8 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
         const visible = layer.mode === 'base' || layer.mode === 'static'
           || layer.mode.startsWith('sway')
           || layer.mode === 'gaze' || layer.mode === 'brow'
-          || layer.mode === 'arm_rest'
+          || layer.mode === 'arm_rest' || layer.mode === 'blink'
           || (layer.mode === 'arm_wave' && mood === 'waving')
-          || (layer.mode === 'blink' && isBlinking)
           || (layer.mode === 'talk' && mouthOpen);
         let transform;
         if (layer.mode === 'gaze') transform = `translate(${gazeX}px, ${gazeY}px)`;
@@ -61,7 +42,7 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
         return (
           <img
             key={layer.id}
-            className={`pet-rig-layer pet-rig-${layer.mode}${layer.mode.startsWith('sway') ? ` pet-rig-${layer.mode}-anim` : ''}`}
+            className={`pet-rig-layer pet-rig-${layer.mode}${layer.mode.startsWith('sway') ? ` pet-rig-${layer.mode}-anim` : ''}${layer.mode === 'blink' ? ' pet-rig-blink-anim' : ''}`}
             src={layer.src}
             alt=""
             draggable="false"

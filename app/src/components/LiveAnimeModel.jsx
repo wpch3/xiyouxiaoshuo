@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BrainCircuit, Sparkles } from 'lucide-react';
 import { soundManager } from '../utils/soundManager';
 import { getPetRig } from '../constants/petRig';
+import { TOOL_CURSORS } from '../constants/toolArt';
 import { LayeredPetRig } from './LayeredPetRig';
 
 const getPortraitPath = (characterId, form) => {
@@ -116,9 +117,9 @@ export const LiveAnimeModel = ({
   };
 
   const cursor = activeTool === 'hammer'
-    ? "url('/cursors/hammer.svg') 8 8, crosshair"
+    ? TOOL_CURSORS.hammer
     : activeTool === 'pet'
-      ? "url('/cursors/petting-hand.svg') 27 8, grab"
+      ? TOOL_CURSORS.pet
       : 'default';
 
   return (

@@ -552,3 +552,12 @@
   34% { transform: rotate(-0.8deg); }
   70% { transform: rotate(0.5deg); }
 }
+
+.pet-rig-blink-anim {
+  animation: petBlinkCycle 4.6s infinite;
+}
+
+@keyframes petBlinkCycle {
+  0%, 91%, 96.5%, 100% { opacity: 0; }
+  92.5%, 95% { opacity: 1; }
+}

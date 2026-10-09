@@ -1,11 +1,12 @@
 import React from 'react';
 import { Maximize2, MousePointer2 } from 'lucide-react';
 import { LiveAnimeModel } from './LiveAnimeModel';
+import { TOOL_ART } from '../constants/toolArt';
 
 const toolOptions = [
   { id: 'pointer', label: '观察', image: null },
-  { id: 'pet', label: '手抚摸', image: '/tools/petting-hand.svg' },
-  { id: 'hammer', label: '小锤子', image: '/tools/hammer.svg' },
+  { id: 'pet', label: '手抚摸', image: TOOL_ART.pet },
+  { id: 'hammer', label: '小锤子', image: TOOL_ART.hammer },
 ];
 
 export const BongoRealDesk = ({

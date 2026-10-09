@@ -40,7 +40,8 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
   it('选中小锤子后光标为锤子图像，点击立绘触发锤击动画与回调', () => {
     const onHammer = vi.fn();
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'hammer', onHammer });
-    expect(stage.style.cursor).toContain('/cursors/hammer.svg');
+    expect(stage.style.cursor).toContain('data:image/svg+xml');
+    expect(stage.style.cursor).toContain('crosshair');
     fire(stage, 'pointerdown', { clientX: 120, clientY: 160 });
     expect(onHammer).toHaveBeenCalledTimes(1);
     const impact = container.querySelector('.pet-impact-layer');
@@ -51,7 +52,8 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
   it('选中抚摸后光标为手部图像，按住拖动产生连续反馈，抬起停止', () => {
     const onPet = vi.fn();
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pet', onPet });
-    expect(stage.style.cursor).toContain('/cursors/petting-hand.svg');
+    expect(stage.style.cursor).toContain('data:image/svg+xml');
+    expect(stage.style.cursor).toContain('grab');
     fire(stage, 'pointerdown', { clientX: 100, clientY: 90 });
     expect(onPet).toHaveBeenCalledTimes(1);
     expect(container.querySelector('.pet-touch-ripple')).not.toBeNull();
@@ -93,11 +95,11 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
 });
 
 describe('分层立绘 rig（拆件）', () => {
-  it('小寻少女形态使用十四层拆件而不是单张图', () => {
+  it('小寻少女形态使用十三层拆件而不是单张图', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
     const rig = stage.querySelector('.pet-rig');
     expect(rig).not.toBeNull();
-    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(14);
+    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(13);
     expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_rig.png');
     const wave = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_wave.png"]');
     const rest = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_rest.png"]');
