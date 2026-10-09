@@ -187,6 +187,7 @@ export default function App() {
       localStorage.setItem('pet_character_form_v1', JSON.stringify(characterForm));
       localStorage.setItem('pet_selected_outfits_v1', JSON.stringify(selectedOutfit));
       localStorage.setItem('pet_favorability_v1', JSON.stringify(favorability));
+      localStorage.setItem('pet_scale_v1', JSON.stringify(petScale));
     } catch (error) {
       console.warn('本地数据保存失败:', error);
     }
