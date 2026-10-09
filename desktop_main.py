@@ -8,6 +8,24 @@ import webview
 from local_api_server import LocalPetServer
 
 
+# A fixed loopback port keeps the WebView origin stable, so localStorage and
+# IndexedDB data remain available after restarting the desktop app.
+DESKTOP_LOCAL_PORT = 8766
+
+
+def get_user_data_dir():
+    """Return a persistent, per-user location for the WebView profile."""
+    if sys.platform.startswith("win"):
+        base_dir = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
+    elif sys.platform == "darwin":
+        base_dir = Path.home() / "Library" / "Application Support"
+    else:
+        base_dir = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+    data_dir = base_dir / "AITokenPet"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return data_dir
+
+
 def get_dist_dir():
     """Find the built Vite bundle in source and PyInstaller builds."""
     if hasattr(sys, "_MEIPASS"):
@@ -165,7 +183,7 @@ class DesktopPetAPI:
 
 def main():
     dist_dir = get_dist_dir()
-    server = LocalPetServer(static_root=dist_dir, host="127.0.0.1", port=0)
+    server = LocalPetServer(static_root=dist_dir, host="127.0.0.1", port=DESKTOP_LOCAL_PORT)
     server.start()
 
     api = DesktopPetAPI(server)
@@ -181,9 +199,17 @@ def main():
         easy_drag=False,
     )
     api.set_main_window(window)
+    webview_storage_path = get_user_data_dir() / "webview"
+    webview_storage_path.mkdir(parents=True, exist_ok=True)
 
     try:
-        webview.start(debug=False)
+        # PyWebView defaults to private mode, which discards localStorage and
+        # IndexedDB at exit. Persist the per-user profile explicitly.
+        webview.start(
+            debug=False,
+            private_mode=False,
+            storage_path=str(webview_storage_path),
+        )
     finally:
         server.stop()
 

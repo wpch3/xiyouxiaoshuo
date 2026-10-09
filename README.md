@@ -82,4 +82,4 @@ npm run dev
 
 ### Windows 桌面版
 
-运行仓库根目录的 `build_windows_exe.ps1`（PowerShell）或 `build_windows_exe.bat`。桌面入口会自动启动仅监听 loopback 的本机网关，并提供 PyWebView Agent 文件/命令桥接。
+运行仓库根目录的 `build_windows_exe.ps1`（PowerShell）或 `build_windows_exe.bat`。桌面入口会自动启动仅监听 loopback 的本机网关（固定端口 8766），并提供 PyWebView Agent 文件/命令桥接。PyWebView 使用非隐私模式和系统用户数据目录中的固定配置文件，配合固定端口保持 WebView 来源一致，让 API 配置、Key、聊天记录和 IndexedDB 资料在重启后继续使用。
