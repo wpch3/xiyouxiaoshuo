@@ -178,3 +178,81 @@ describe('分层立绘 rig（拆件）', () => {
     expect(stage.querySelector('.pet-portrait-image').tagName).toBe('IMG');
   });
 });
+
+describe('自检：口型节奏 / 视线缓动 / 舞台几何', () => {
+  it('口型调度器出现词间闭口停顿且帧序列非机械循环', () => {
+    vi.useFakeTimers();
+    try {
+      const rigDef = getPetRig('deepseek', 'normal');
+      act(() => {
+        root.render(<LayeredPetRig rig={rigDef} isSpeaking />);
+      });
+      const frames = () => Array.from(container.querySelectorAll('.pet-rig-talk'));
+      const seen = new Set();
+      let closedSeen = false;
+      let maxVisible = 0;
+      for (let i = 0; i < 120; i += 1) {
+        act(() => {
+          vi.advanceTimersByTime(50);
+        });
+        const vis = frames().filter((f) => f.style.opacity === '1');
+        maxVisible = Math.max(maxVisible, vis.length);
+        if (vis.length === 0) closedSeen = true;
+        frames().forEach((f, idx) => {
+          if (f.style.opacity === '1') seen.add(idx);
+        });
+      }
+      expect(closedSeen).toBe(true);
+      expect(seen.size).toBeGreaterThan(2);
+      expect(maxVisible).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('停止说话时口型立即闭合', () => {
+    vi.useFakeTimers();
+    try {
+      const rigDef = getPetRig('deepseek', 'normal');
+      act(() => {
+        root.render(<LayeredPetRig rig={rigDef} isSpeaking />);
+      });
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      act(() => {
+        root.render(<LayeredPetRig rig={rigDef} isSpeaking={false} />);
+      });
+      const vis = Array.from(container.querySelectorAll('.pet-rig-talk')).filter((f) => f.style.opacity === '1');
+      expect(vis).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('视线缓动：虹膜 transform 渐进收敛到目标而不是瞬移', async () => {
+    const rigDef = getPetRig('deepseek', 'normal');
+    act(() => {
+      root.render(<LayeredPetRig rig={rigDef} look={{ x: 0, y: 0 }} />);
+    });
+    const gaze = container.querySelector('.pet-rig-gaze');
+    act(() => {
+      root.render(<LayeredPetRig rig={rigDef} look={{ x: 1, y: 0 }} />);
+    });
+    const immediate = gaze.style.transform;
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 800));
+    });
+    expect(gaze.style.transform).toBe('translate(0.70px, 0.00px)');
+    expect(immediate).not.toBe('translate(0.70px, 0.00px)');
+  });
+
+  it('舞台几何：背景加高、角色锚底缩放、缩放不溢出控件', () => {
+    const stage = render({ characterId: 'deepseek', form: 'normal', scale: 1.5, size: 320 });
+    expect(stage.style.height).toBe(`${Math.round(320 * 1.62)}px`);
+    const pose = stage.querySelector('.pet-pose-layer');
+    expect(pose.style.transformOrigin).toBe('50% 100%');
+    expect(pose.style.transform).toContain(`scale(${0.9 * 1.5})`);
+    expect(stage.className).toContain('dynamic-pet-stage');
+  });
+});

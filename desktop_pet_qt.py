@@ -11,6 +11,7 @@
 """
 from __future__ import annotations
 
+import ctypes
 import math
 import os
 import sys
@@ -142,7 +143,99 @@ def install_global_key_hook(on_key):
     return hook, callback
 
 
+def run_logic_selftest() -> int:
+    """不依赖 Qt 的纯逻辑自检：状态机优先级/过期、空闲检测回退、几何换算。"""
+    results = []
+
+    def check(name, cond):
+        results.append((name, bool(cond)))
+
+    st = ActionState()
+    check("idle_default", st.current == "idle")
+    st.request("tap")
+    check("idle_to_tap", st.current == "tap")
+    check("low_prio_blocked_during_tap", st.request("idle") is False and st.current == "tap")
+    st.request("pat")
+    check("high_prio_interrupts", st.current == "pat")
+    check("force_wake", st.request("idle", force=True) and st.current == "idle")
+    st.request("tap")
+    st.expire(time.time() + 1)
+    check("tap_expires_to_idle", st.current == "idle")
+    st.request("sleep")
+    check("sleep_enter", st.current == "sleep")
+    check("sleep_interruptible", st.request("tap") and st.current == "tap")
+    idle = IdleDetector()
+    check("idle_detector_nonwin_fallback", idle.seconds() >= 0.0)
+    k = 0.55
+    pw, ph = int(424 * k), int(632 * k)
+    check("geometry_default_scale", pw == 233 and ph == 347)
+    ok = all(c for _, c in results)
+    for name, cond in results:
+        print("PASS" if cond else "FAIL", name)
+    print("LOGIC_SELFTEST", "OK" if ok else "BROKEN")
+    return 0 if ok else 1
+
+
+def run_selftest(win, Qt):  # noqa: N803
+    """offscreen 自检：状态机/触摸分区/缩放/睡眠唤醒/穿透/绘制全路径。"""
+    from PySide6.QtCore import QPoint, QPointF
+    from PySide6.QtGui import QWheelEvent
+    from PySide6.QtTest import QTest
+    results = []
+
+    def check(name, cond):
+        results.append((name, bool(cond)))
+
+    center = QPoint(win.pet_w // 2, win.pet_h // 2)
+    win.tick()
+    win.grab()
+    check("paint_idle", True)
+    QTest.mousePress(win, Qt.LeftButton, Qt.NoModifier, QPoint(win.pet_w // 2, int(win.pet_h * 0.15)))
+    check("pat_zone_head", win.state.current == "pat")
+    QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, QPoint(win.pet_w // 2, int(win.pet_h * 0.15)))
+    win.state.expire(time.time() + 1)
+    check("state_expire", win.state.current == "idle")
+    QTest.mousePress(win, Qt.LeftButton, Qt.NoModifier, QPoint(win.pet_w // 2, int(win.pet_h * 0.6)))
+    check("tap_zone_body", win.state.current == "tap")
+    QTest.mouseMove(win, QPoint(win.pet_w // 2 + 30, int(win.pet_h * 0.6)))
+    QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, QPoint(win.pet_w // 2 + 30, int(win.pet_h * 0.6)))
+    win.state.expire(time.time() + 1)
+    before = win.scale
+    we = QWheelEvent(QPointF(center), QPointF(center), QPoint(0, 0), QPoint(0, 120),
+                     Qt.NoButton, Qt.NoModifier, Qt.NoScrollPhase, False)
+    win.wheelEvent(we)
+    check("wheel_zoom_in", win.scale > before)
+    check("size_follows_scale", win.pet_w == int(424 * win.scale))
+    win.state.expire(time.time() + 1)
+    win.last_activity = time.time() - 100
+    win.tick()
+    check("sleep_after_idle", win.state.current == "sleep")
+    img = win.grab().toImage()
+    check("sleep_paint", (not img.isNull()) and img.width() == win.pet_w)
+    win.on_global_key()
+    check("wake_on_key", win.state.current == "idle")
+    win.on_global_key()
+    check("tap_via_global_hook", win.state.current == "tap")
+    win.state.expire(time.time() + 1)
+    win.setWindowFlag(Qt.WindowTransparentForInput, True)
+    win.show()
+    check("click_through_on", bool(win.windowFlags() & Qt.WindowTransparentForInput))
+    win.setWindowFlag(Qt.WindowTransparentForInput, False)
+    win.show()
+    check("click_through_off", not bool(win.windowFlags() & Qt.WindowTransparentForInput))
+    ok = all(c for _, c in results)
+    for name, cond in results:
+        print("PASS" if cond else "FAIL", name)
+    print("QT_SELFTEST", "OK" if ok else "BROKEN")
+    return 0 if ok else 1
+
+
 def main() -> int:
+    selftest = "--selftest" in sys.argv[1:]
+    if "--selftest-logic" in sys.argv[1:]:
+        return run_logic_selftest()
+    if selftest:
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     if not LAYER_DIR.exists():
         print("未找到拆件素材目录:", LAYER_DIR)
         return 1
@@ -350,6 +443,8 @@ def main() -> int:
     through_act.triggered.connect(toggle_click_through)
     quit_act.triggered.connect(lambda: QApplication.quit())
     tray.show()
+    if selftest:
+        return run_selftest(win, Qt)
     return app.exec()
 
 
