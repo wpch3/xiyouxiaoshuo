@@ -3,13 +3,10 @@ import sys
 import subprocess
 import tempfile
 from pathlib import Path
-<<<<<<< HEAD
-=======
 
 # WebView2 在某些显卡驱动上会整窗黑屏；禁用 GPU 合成可回退到软件渲染。
 os.environ.setdefault("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--disable-gpu")
 
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 import webview
 
 from local_api_server import LocalPetServer
@@ -188,10 +185,6 @@ class DesktopPetAPI:
         }
 
 
-<<<<<<< HEAD
-def main():
-    dist_dir = get_dist_dir()
-=======
 ERROR_HTML = """
 <div style="min-height:100vh;display:grid;place-items:center;background:#0b0f16;color:#e2e8f0;font:14px/1.8 system-ui,sans-serif;padding:24px">
   <div style="max-width:560px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:22px">
@@ -208,7 +201,6 @@ def main():
         webview.create_window(title="AI Token Pet · 缺少界面构建", html=ERROR_HTML, width=640, height=420)
         webview.start(private_mode=True)
         raise SystemExit(1)
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
     server = LocalPetServer(static_root=dist_dir, host="127.0.0.1", port=DESKTOP_LOCAL_PORT)
     server.start()
 

@@ -2,11 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BrainCircuit, Sparkles } from 'lucide-react';
 import { soundManager } from '../utils/soundManager';
 import { getPetRig } from '../constants/petRig';
-<<<<<<< HEAD
-import { TOOL_CURSORS } from '../constants/toolArt';
-=======
 import { getToolCursor, getToolButtonArt } from '../constants/toolArt';
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 import { LayeredPetRig } from './LayeredPetRig';
 
 const getPortraitPath = (characterId, form) => {
@@ -121,15 +117,9 @@ export const LiveAnimeModel = ({
   };
 
   const cursor = activeTool === 'hammer'
-<<<<<<< HEAD
-    ? TOOL_CURSORS.hammer
-    : activeTool === 'pet'
-      ? TOOL_CURSORS.pet
-=======
     ? getToolCursor(characterId, 'hammer')
     : activeTool === 'pet'
       ? getToolCursor(characterId, 'pet')
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
       : 'default';
 
   return (
@@ -199,11 +189,7 @@ export const LiveAnimeModel = ({
           style={{ left: impact.x, top: impact.y }}
         >
           <span className="pet-impact-ring" />
-<<<<<<< HEAD
-          <img className="pet-impact-hammer" src="/tools/hammer.svg" alt="" />
-=======
           <img className="pet-impact-hammer" src={getToolButtonArt(characterId, 'hammer').src} style={{ filter: getToolButtonArt(characterId, 'hammer').filter }} alt="" />
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
           <Sparkles className="pet-impact-spark" size={32} color={accentColor} strokeWidth={2.5} />
         </div>
       )}

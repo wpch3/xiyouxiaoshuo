@@ -40,31 +40,19 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
   it('选中小锤子后光标为锤子图像，点击立绘触发锤击动画与回调', () => {
     const onHammer = vi.fn();
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'hammer', onHammer });
-<<<<<<< HEAD
-    expect(stage.style.cursor).toContain('data:image/svg+xml');
-=======
     expect(stage.style.cursor).toContain('data:image/png');
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
     expect(stage.style.cursor).toContain('crosshair');
     fire(stage, 'pointerdown', { clientX: 120, clientY: 160 });
     expect(onHammer).toHaveBeenCalledTimes(1);
     const impact = container.querySelector('.pet-impact-layer');
     expect(impact).not.toBeNull();
-<<<<<<< HEAD
-    expect(impact.querySelector('.pet-impact-hammer').getAttribute('src')).toBe('/tools/hammer.svg');
-=======
     expect(impact.querySelector('.pet-impact-hammer').getAttribute('src')).toContain('data:image/png');
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
   });
 
   it('选中抚摸后光标为手部图像，按住拖动产生连续反馈，抬起停止', () => {
     const onPet = vi.fn();
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pet', onPet });
-<<<<<<< HEAD
-    expect(stage.style.cursor).toContain('data:image/svg+xml');
-=======
     expect(stage.style.cursor).toContain('data:image/png');
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
     expect(stage.style.cursor).toContain('grab');
     fire(stage, 'pointerdown', { clientX: 100, clientY: 90 });
     expect(onPet).toHaveBeenCalledTimes(1);

@@ -382,51 +382,6 @@
   .pet-stage-caption { font-size: .58rem; bottom: 7px; }
 }
 
-<<<<<<< HEAD
-.compact-pet-workspace {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: 22px;
-  background: linear-gradient(150deg, rgba(255,255,255,.08), rgba(255,255,255,.025));
-  box-shadow: 0 16px 36px rgba(12,20,39,.2), inset 0 1px 0 rgba(255,255,255,.12);
-}
-
-.compact-pet-speech {
-  width: 100%;
-  max-height: 58px;
-  overflow: auto;
-  padding: 8px 11px;
-  border: 1px solid color-mix(in srgb, var(--pet-accent) 42%, transparent);
-  border-radius: 13px;
-  color: #f1f5f9;
-  background: rgba(15,23,42,.72);
-  font-size: .72rem;
-  line-height: 1.45;
-  text-align: center;
-}
-
-.compact-tool-dock { padding: 5px; gap: 5px; }
-.compact-tool-dock .pet-tool-button { min-height: 43px; font-size: .68rem; }
-.compact-tool-dock .pet-tool-button img { width: 24px; height: 24px; }
-
-.compact-pet-footer {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 3px 0;
-  color: #94a3b8;
-  font-size: .66rem;
-}
-
-.compact-pet-footer button,
-=======
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 .floating-pet-titlebar button {
   display: grid;
   place-items: center;
@@ -455,11 +410,7 @@
 }
 
 .floating-pet-titlebar > span { display: inline-flex; align-items: center; gap: 7px; }
-<<<<<<< HEAD
-.floating-pet-titlebar button:hover, .compact-pet-footer button:hover { background: rgba(255,255,255,.15); }
-=======
 .floating-pet-titlebar button:hover { background: rgba(255,255,255,.15); }
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 
 .avatar-state-badge {
   position: absolute;
@@ -568,8 +519,6 @@
   0%, 91%, 96.5%, 100% { opacity: 0; }
   92.5%, 95% { opacity: 1; }
 }
-<<<<<<< HEAD
-=======
 
 /* ── 桌面小窗（bomcat 极简风）：只有角色 + 余额 + 召唤按钮 + 右键菜单 ── */
 .compact-stage {
@@ -617,4 +566,3 @@
 .pet-ctx-icon { display: grid; place-items: center; width: 17px; height: 17px; }
 .pet-ctx-sep { height: 1px; margin: 5px 8px; background: rgba(255,255,255,.10); }
 .compact-stage.is-contained { position: absolute; border-radius: 14px; }
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)

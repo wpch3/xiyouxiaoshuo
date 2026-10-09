@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AI_CHARACTERS, FOOD_ITEMS } from './constants/characters';
-<<<<<<< HEAD
-import { TOOL_ART } from './constants/toolArt';
-import { LiveAnimeModel } from './components/LiveAnimeModel';
-import { BongoRealDesk } from './components/BongoRealDesk';
-=======
 import { getToolButtonArt } from './constants/toolArt';
 import { CompactPetStage } from './components/CompactPetStage';
 import { LiveAnimeModel } from './components/LiveAnimeModel';
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 import { FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
 import { VoiceChatControls } from './components/VoiceChatControls';
@@ -597,104 +591,6 @@ export default function App() {
       <main style={{ flex: 1, padding: windowMode === 'full' ? '24px' : '16px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
         {/* 精简模式下切换为真正的 Bongo 实时键鼠工作台 */}
         {windowMode === 'compact' ? (
-<<<<<<< HEAD
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              backgroundColor: char.cardBg,
-              borderRadius: '24px',
-              padding: '14px',
-              border: `1px solid ${char.borderTone}`,
-              maxWidth: '420px',
-              margin: '12px auto',
-              boxShadow: `0 20px 50px rgba(0,0,0,0.6), 0 0 30px ${char.glowColor}`
-            }}
-          >
-            {/* 顶栏快速切换 */}
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontWeight: 700, color: char.accentColor, fontSize: '0.9rem' }}>{char.name}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>能量: {fmtTokens(acc.balanceTokens)}</span>
-                <button
-                  onClick={() => {
-                    if (window.pywebview?.api?.close_floating_pet) window.pywebview.api.close_floating_pet();
-                    else setWindowMode('full');
-                  }}
-                  title="关闭桌宠小窗"
-                  style={{ border: 0, background: 'rgba(255,255,255,0.08)', color: '#cbd5e1', borderRadius: '7px', width: '24px', height: '24px', cursor: 'pointer' }}
-                >×</button>
-              </div>
-            </div>
-
-            {/* 真实键鼠联动工作台 */}
-            <BongoRealDesk
-              characterId={currentId}
-              mood={mood}
-              speechText={speechText}
-              tokensToday={acc.todayTokens}
-              form={characterForm}
-              activeTool={activeTool}
-              accentColor={char.accentColor}
-              onPet={handlePetAvatar}
-              onHammer={handleHammerAvatar}
-              onSelectTool={setActiveTool}
-              onOpenDashboard={() => {
-                if (window.pywebview?.api?.open_main_window) window.pywebview.api.open_main_window();
-                else setWindowMode('full');
-              }}
-            />
-
-            {/* 快速投喂操作 */}
-            <div style={{ display: 'flex', gap: '8px', marginTop: '14px', width: '100%', justifyContent: 'center' }}>
-              {FOOD_ITEMS.slice(0, 3).map((food) => (
-                <button
-                  key={food.id}
-                  onClick={() => handleFeedFood(food)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 6px',
-                    borderRadius: '10px',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    border: `1px solid ${char.borderTone}`,
-                    color: '#fff',
-                    fontSize: '0.76rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  <img className="pet-food-image" src={food.image} alt="" />
-                  <span>+{fmtTokens(food.tokens)}</span>
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => triggerManualCall(35000, '快捷推理调用')}
-              style={{
-                marginTop: '12px',
-                width: '100%',
-                padding: '8px',
-                borderRadius: '10px',
-                backgroundColor: `${char.color}33`,
-                border: `1px solid ${char.color}`,
-                color: '#fff',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}
-            >
-              <Zap size={14} color={char.color} /> 发送快捷任务
-            </button>
-          </div>
-=======
           <CompactPetStage
             characterId={currentId}
             form={characterForm}
@@ -727,7 +623,6 @@ export default function App() {
               else setWindowMode('full');
             }}
           />
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
         ) : (
           /* 完整仪表盘模式 */
           <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
@@ -874,13 +769,8 @@ export default function App() {
               <div className="pet-tool-dock" style={{ zIndex: 3, '--pet-accent': char.color }} aria-label="桌宠互动工具">
                 {[
                   { id: 'pointer', label: '观察', icon: <MousePointer2 size={23} strokeWidth={1.8} /> },
-<<<<<<< HEAD
-                  { id: 'pet', label: '手抚摸', image: TOOL_ART.pet },
-                  { id: 'hammer', label: '小锤子', image: TOOL_ART.hammer },
-=======
                   { id: 'pet', label: '手抚摸', art: getToolButtonArt(currentId, 'pet') },
                   { id: 'hammer', label: '小锤子', art: getToolButtonArt(currentId, 'hammer') },
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
                 ].map((tool) => (
                   <button
                     key={tool.id}
@@ -889,11 +779,7 @@ export default function App() {
                     aria-pressed={activeTool === tool.id}
                     onClick={() => setActiveTool(tool.id)}
                   >
-<<<<<<< HEAD
-                    {tool.image ? <img src={tool.image} alt="" /> : tool.icon}
-=======
                     {tool.art ? <img src={tool.art.src} style={{ filter: tool.art.filter }} alt="" /> : tool.icon}
->>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
                     <span>{tool.label}</span>
                   </button>
                 ))}
