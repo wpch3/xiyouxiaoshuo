@@ -42,9 +42,11 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
   return (
     <div className={`pet-rig ${className}`} data-rig-layers={rig.layers.length}>
       {rig.layers.map((layer) => {
-        const visible = layer.mode === 'base'
-          || layer.mode === 'sway' || layer.mode === 'sway_l' || layer.mode === 'sway_r'
+        const visible = layer.mode === 'base' || layer.mode === 'static'
+          || layer.mode.startsWith('sway')
           || layer.mode === 'gaze' || layer.mode === 'brow'
+          || layer.mode === 'arm_rest'
+          || (layer.mode === 'arm_wave' && mood === 'waving')
           || (layer.mode === 'blink' && isBlinking)
           || (layer.mode === 'talk' && mouthOpen);
         let transform;

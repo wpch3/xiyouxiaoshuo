@@ -93,12 +93,16 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
 });
 
 describe('分层立绘 rig（拆件）', () => {
-  it('小寻少女形态使用八层拆件而不是单张图', () => {
+  it('小寻少女形态使用十四层拆件而不是单张图', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
     const rig = stage.querySelector('.pet-rig');
     expect(rig).not.toBeNull();
-    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(8);
-    expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_final.png');
+    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(14);
+    expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_rig.png');
+    const wave = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_wave.png"]');
+    const rest = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_rest.png"]');
+    expect(wave.style.opacity).toBe('0');
+    expect(rest.style.opacity).toBe('1');
   });
 
   it('说话时嘴部口型层切换，眨眼计时器驱动眼睑层', () => {

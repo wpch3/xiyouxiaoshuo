@@ -530,3 +530,25 @@
   30% { transform: rotate(1.1deg) translateX(1px); }
   62% { transform: rotate(-1.1deg) translateX(-1px); }
 }
+
+.pet-rig-sway_bl-anim {
+  transform-origin: 46% 6%;
+  animation: petBackSwayL 7.4s ease-in-out infinite;
+}
+
+.pet-rig-sway_br-anim {
+  transform-origin: 54% 6%;
+  animation: petBackSwayR 6.8s ease-in-out infinite;
+}
+
+@keyframes petBackSwayL {
+  0%, 100% { transform: rotate(0deg); }
+  38% { transform: rotate(0.8deg); }
+  72% { transform: rotate(-0.5deg); }
+}
+
+@keyframes petBackSwayR {
+  0%, 100% { transform: rotate(0deg); }
+  34% { transform: rotate(-0.8deg); }
+  70% { transform: rotate(0.5deg); }
+}

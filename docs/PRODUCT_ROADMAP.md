@@ -29,5 +29,6 @@
 ## 分层拆件实施（Live2D/Spine 规范的 Web 等价物）
 - 拆件原则采纳：头发分前发/侧发/后发、眼睛左右独立且含睫毛/眼白/瞳孔/高光、嘴含口腔/舌、脸底/腮红/耳、脖子补图、衣服与肉体分离、四肢左右独立；被遮挡关节必须补图；对称部件不合并；图层英文命名并建组。
 - 本管线不使用 Live2D/Spine：部件为同尺寸透明 PNG + `app/src/constants/petRig.js` 清单（z 序与动画映射）+ `LayeredPetRig` 组件叠放渲染。
-- 已实装：小寻少女形态八层（base_final 补图底、mouth_open 口型、iris 视线、eyelids 眼睑、brows 情绪眉、side_hair_l/r 反相摆动、bangs 刘海摆动），眨眼/口型/视线/眉毛均有组件测试（9/9）。
+- 已实装：小寻少女形态十四层（back_hair_l/r 反相摆动、base_rig 补图底、mouth_open 口型、iris 视线、highlights 固定高光、eyelids 眼睑、brows 情绪眉、arm_l/arm_r_rest 独立手臂、side_hair_l/r 反相摆动、bangs 刘海摆动），组件测试 9/9。
+- 暂缓：arm_r_wave 挥手层已切出但 torso 侧暴露区存在编辑漂移孔洞，默认不启用（mode=arm_wave 仅 mood=waving 显示），待用整帧姿态变体方案重做。
 - 待做：小寻其余三形态与其余 6 角色的拆件集；后发分段物理摆动、手臂挥手/抓取层（大臂/小臂/手掌）、口腔内部细分层（牙/舌）。
