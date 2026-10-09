@@ -150,7 +150,7 @@ export const LiveAnimeModel = ({
         style={{ transform: `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg)` }}
       >
         {rig ? (
-          <LayeredPetRig rig={rig} isSpeaking={isSpeaking} className="pet-portrait-image" />
+          <LayeredPetRig rig={rig} isSpeaking={isSpeaking} look={{ x: look.x, y: look.y }} mood={mood} className="pet-portrait-image" />
         ) : (
           <img
             className="pet-portrait-image"

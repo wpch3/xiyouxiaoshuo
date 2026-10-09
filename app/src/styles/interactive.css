@@ -498,9 +498,31 @@
   pointer-events: none;
 }
 
-.pet-rig-sway {
+.pet-rig-sway-anim {
   transform-origin: 50% 7%;
   animation: petBangsSway 5.4s ease-in-out infinite;
+}
+
+.pet-rig-sway_l-anim {
+  transform-origin: 42% 10%;
+  animation: petSideSwayL 6.2s ease-in-out infinite;
+}
+
+.pet-rig-sway_r-anim {
+  transform-origin: 58% 10%;
+  animation: petSideSwayR 5.7s ease-in-out infinite;
+}
+
+@keyframes petSideSwayL {
+  0%, 100% { transform: rotate(0deg); }
+  34% { transform: rotate(1.3deg); }
+  70% { transform: rotate(-0.8deg); }
+}
+
+@keyframes petSideSwayR {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-1.3deg); }
+  68% { transform: rotate(0.8deg); }
 }
 
 @keyframes petBangsSway {

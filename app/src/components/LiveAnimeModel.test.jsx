@@ -93,12 +93,12 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
 });
 
 describe('分层立绘 rig（拆件）', () => {
-  it('小寻少女形态使用四层拆件而不是单张图', () => {
+  it('小寻少女形态使用八层拆件而不是单张图', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
     const rig = stage.querySelector('.pet-rig');
     expect(rig).not.toBeNull();
-    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(4);
-    expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_nobangs.png');
+    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(8);
+    expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_final.png');
   });
 
   it('说话时嘴部口型层切换，眨眼计时器驱动眼睑层', () => {
@@ -122,6 +122,22 @@ describe('分层立绘 rig（拆件）', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('虹膜层随视线偏移、眉毛层随情绪抬压', () => {
+    const rigDef = getPetRig('deepseek', 'normal');
+    act(() => {
+      root.render(<LayeredPetRig rig={rigDef} look={{ x: 7, y: 4 }} mood="happy" />);
+    });
+    const iris = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/iris.png"]');
+    const brows = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/brows.png"]');
+    expect(iris.style.transform).toContain('translate(3.15px, 1.4px)');
+    expect(brows.style.transform).toBe('translateY(-2.5px)');
+    act(() => {
+      root.render(<LayeredPetRig rig={rigDef} look={{ x: 0, y: 0 }} mood="hammered" />);
+    });
+    expect(brows.style.transform).toBe('translateY(1.5px)');
+    expect(iris.style.transform).toBe('translate(0px, 0px)');
   });
 
   it('其他角色/形态仍回退到单张立绘', () => {

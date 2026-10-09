@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
 // 分层立绘渲染器：同尺寸透明 PNG 按 z 序叠放，部件级动画
-// （刘海摆动 / 眼睑眨眼 / 嘴部口型），对应拆件清单 PET_RIGS。
-export const LayeredPetRig = ({ rig, isSpeaking = false, className = '' }) => {
+// （刘海/双侧发摆动、眼睑眨眼、嘴部口型、虹膜视线、眉毛情绪），
+// 对应拆件清单 PET_RIGS。
+export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, mood = 'idle', className = '' }) => {
   const [isBlinking, setIsBlinking] = useState(false);
   const [mouthOpen, setMouthOpen] = useState(false);
 
@@ -32,21 +35,29 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, className = '' }) => {
     return () => window.clearInterval(timer);
   }, [isSpeaking]);
 
+  const gazeX = clamp((look.x || 0) * 0.45, -3.2, 3.2);
+  const gazeY = clamp((look.y || 0) * 0.35, -2.2, 2.2);
+  const browShift = mood === 'happy' ? -2.5 : mood === 'hammered' ? 1.5 : 0;
+
   return (
     <div className={`pet-rig ${className}`} data-rig-layers={rig.layers.length}>
       {rig.layers.map((layer) => {
         const visible = layer.mode === 'base'
-          || (layer.mode === 'sway')
+          || layer.mode === 'sway' || layer.mode === 'sway_l' || layer.mode === 'sway_r'
+          || layer.mode === 'gaze' || layer.mode === 'brow'
           || (layer.mode === 'blink' && isBlinking)
           || (layer.mode === 'talk' && mouthOpen);
+        let transform;
+        if (layer.mode === 'gaze') transform = `translate(${gazeX}px, ${gazeY}px)`;
+        if (layer.mode === 'brow') transform = `translateY(${browShift}px)`;
         return (
           <img
             key={layer.id}
-            className={`pet-rig-layer pet-rig-${layer.mode}${layer.mode === 'sway' ? ' pet-rig-sway' : ''}`}
+            className={`pet-rig-layer pet-rig-${layer.mode}${layer.mode.startsWith('sway') ? ` pet-rig-${layer.mode}-anim` : ''}`}
             src={layer.src}
             alt=""
             draggable="false"
-            style={{ zIndex: layer.z, opacity: visible ? 1 : 0 }}
+            style={{ zIndex: layer.z, opacity: visible ? 1 : 0, transform }}
           />
         );
       })}
