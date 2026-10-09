@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import confetti from 'canvas-confetti';
 import { AI_CHARACTERS, FOOD_ITEMS } from './constants/characters';
-import { AvatarRenderer } from './components/Avatars';
-import { LiveInteractiveAvatar } from './components/LiveInteractiveAvatar';
 import { LiveAnimeModel } from './components/LiveAnimeModel';
 import { BongoRealDesk } from './components/BongoRealDesk';
-import { BongoPetLive, FloatingDeskPetOverlay } from './components/BongoPetLive';
+import { FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
 import { VoiceChatControls } from './components/VoiceChatControls';
 import { WorkspacePanel, LibraryPanel, AgentPanel, SocialPanel, LinksPanel } from './components/ProjectPanels';
@@ -37,7 +34,15 @@ import {
   ChevronRight,
   PlusCircle,
   AlertTriangle,
-  Gift
+  Gift,
+  MousePointer2,
+  MessageCircle,
+  Shirt,
+  BookOpen,
+  Package,
+  ClipboardList,
+  PlugZap,
+  Mic
 } from 'lucide-react';
 
 const ACCOUNT_STORAGE_KEY = 'pet_account_state_v1';
@@ -101,7 +106,7 @@ export default function App() {
   const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'crying' | 'thinking' | 'hammered'
   const [characterForm, setCharacterForm] = useState(() => readLocalJson('pet_character_form_v1', 'normal')); // loli | normal(少女) | mature | chibi
   const [speechText, setSpeechText] = useState('');
-  const [currentProp, setCurrentProp] = useState('none'); // 'none' | 'hammer' | 'glove'
+  const [activeTool, setActiveTool] = useState('pointer');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [userChatInput, setUserChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -176,71 +181,25 @@ export default function App() {
     }
   }, [accounts, chatHistories, liveCallLog, currentId, characterForm, selectedOutfit, favorability]);
 
-  // 初始化说话
-  useEffect(() => {
-    const list = char.dialogues.idle;
-    const randomSpeech = list[Math.floor(Math.random() * list.length)];
-    setSpeechText(randomSpeech);
-  }, [currentId]);
-
-  // 定时自动说话（每 18 秒随机一句）
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (mood === 'idle') {
-        const list = char.dialogues.idle;
-        const randomSpeech = list[Math.floor(Math.random() * list.length)];
-        setSpeechText(randomSpeech);
-      }
-    }, 18000);
-    return () => clearInterval(interval);
-  }, [currentId, mood]);
-
-  // 互动：摸摸头
+  // 互动动作只更新角色状态，不伪造角色台词；对话气泡只展示 API 回复与连接状态。
   const handlePetAvatar = () => {
     setMood('happy');
-    const pets = char.dialogues.petting;
-    const line = pets[Math.floor(Math.random() * pets.length)];
-    setSpeechText(line);
-
-    // 好感度增加
-    setFavorability(prev => ({
+    setFavorability((prev) => ({
       ...prev,
-      [currentId]: Math.min(100, prev[currentId] + 2)
+      [currentId]: Math.min(100, (prev[currentId] || 0) + 1),
     }));
+    window.setTimeout(() => setMood((currentMood) => currentMood === 'happy' ? 'idle' : currentMood), 900);
+  };
 
-    // 放一点温和彩屑与萌系音效
-    soundManager.playPet();
-    try {
-      confetti({
-        particleCount: 25,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: [char.color, char.accentColor, '#FFFFFF']
-      });
-    } catch (e) {}
-
-    setTimeout(() => {
-      setMood('idle');
-    }, 3200);
+  const handleHammerAvatar = () => {
+    setMood('hammered');
+    window.setTimeout(() => setMood((currentMood) => currentMood === 'hammered' ? 'idle' : currentMood), 560);
   };
 
   // 互动：投喂食物 / 充能
   const handleFeedFood = (food) => {
     setMood('happy');
     soundManager.playFeed();
-    const feedings = char.dialogues.feeding;
-    const line = feedings[Math.floor(Math.random() * feedings.length)];
-    setSpeechText(line);
-
-    try {
-      confetti({
-        particleCount: 50,
-        spread: 70,
-        origin: { y: 0.65 },
-        colors: [char.color, '#FFD700', '#6EE7B7']
-      });
-    } catch (e) {}
-
     // 更新账户 Token
     setAccounts(prev => {
       const cur = prev[currentId];
@@ -417,6 +376,10 @@ export default function App() {
           speechText={speechText}
           tokensToday={acc.todayTokens}
           onPet={handlePetAvatar}
+          onHammer={handleHammerAvatar}
+          onSelectTool={setActiveTool}
+          activeTool={activeTool}
+          accentColor={char.accentColor}
           onClose={() => setIsFloatingOverlayOpen(false)}
         />
       )}
@@ -511,14 +474,10 @@ export default function App() {
                   boxShadow: isSelected ? `0 0 12px ${item.glowColor}` : 'none'
                 }}
               >
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    backgroundColor: item.color,
-                    boxShadow: `0 0 6px ${item.color}`
-                  }}
+                <img
+                  src={item.id === 'deepseek' ? '/characters/deepseek_live.png' : `/characters/${item.id}.png`}
+                  alt=""
+                  style={{ width: 30, height: 30, objectFit: 'cover', objectPosition: 'center 18%', borderRadius: '50%', border: `1px solid ${item.color}80`, background: `${item.color}22` }}
                 />
                 {item.name.split(' ')[0]}
               </button>
@@ -552,7 +511,7 @@ export default function App() {
             }}
             title="开启/关闭独立桌面置顶伴侣小窗"
           >
-            🐾 {isFloatingOverlayOpen ? '置顶小窗已激活' : '弹出独立桌宠小窗'}
+            <Heart size={14} /> {isFloatingOverlayOpen ? '置顶小窗已激活' : '弹出独立桌宠小窗'}
           </button>
 
           <span
@@ -661,7 +620,12 @@ export default function App() {
               mood={mood}
               speechText={speechText}
               tokensToday={acc.todayTokens}
+              form={characterForm}
+              activeTool={activeTool}
+              accentColor={char.accentColor}
               onPet={handlePetAvatar}
+              onHammer={handleHammerAvatar}
+              onSelectTool={setActiveTool}
               onOpenDashboard={() => {
                 if (window.pywebview?.api?.open_main_window) window.pywebview.api.open_main_window();
                 else setWindowMode('full');
@@ -689,7 +653,7 @@ export default function App() {
                     gap: '4px'
                   }}
                 >
-                  <span style={{ fontSize: '1.2rem' }}>{food.icon}</span>
+                  <img className="pet-food-image" src={food.image} alt="" />
                   <span>+{fmtTokens(food.tokens)}</span>
                 </button>
               ))}
@@ -721,6 +685,7 @@ export default function App() {
           <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
             {/* 左侧：拟人角色舞台与互动专区 */}
             <div
+              className="pet-main-card"
               style={{
                 backgroundColor: char.cardBg,
                 borderRadius: '24px',
@@ -782,7 +747,7 @@ export default function App() {
 
               {/* 实时台词气泡 */}
               <div
-                className="speech-bubble"
+                className="speech-bubble pet-speech-bubble"
                 style={{
                   zIndex: 2,
                   marginTop: '12px',
@@ -821,116 +786,41 @@ export default function App() {
                   characterId={currentId}
                   form={characterForm}
                   mood={mood}
-                  currentProp={currentProp}
+                  activeTool={activeTool}
                   isSpeaking={isSpeaking}
-                  size={290}
+                  accentColor={char.accentColor}
+                  onPet={handlePetAvatar}
+                  onHammer={handleHammerAvatar}
+                  size={320}
                 />
               </div>
 
-              {/* 道具互动与情绪快捷栏 (举手高兴 / 被打哭 / 小锤子 / 猫爪手套) */}
-              <div style={{ width: '100%', zIndex: 3, marginBottom: '10px', display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                <button
-                  onClick={() => {
-                    setMood('happy');
-                    soundManager.playPet();
-                    setSpeechText("哇！好开心呀主公！我们一起加油！");
-                    setTimeout(() => setMood('idle'), 2500);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(244, 63, 94, 0.2)',
-                    border: '1px solid rgba(244, 63, 94, 0.4)',
-                    color: '#fda4af',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  title="举手欢呼跳跃"
-                >
-                  🙋‍♀️ 举手高兴
-                </button>
-
-                <button
-                  onClick={() => {
-                    setMood('crying');
-                    soundManager.playTap(false);
-                    setSpeechText("呜呜呜... 为什么敲我嘛，好痛痛，眼泪都要流出来了...");
-                    setTimeout(() => setMood('idle'), 3000);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                    border: '1px solid rgba(59, 130, 246, 0.4)',
-                    color: '#93c5fd',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  title="委屈流泪"
-                >
-                  😭 委屈哭泣
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentProp('hammer');
-                    setMood('hammered');
-                    soundManager.playTap(true);
-                    setSpeechText("Duang！小锤子敲到头顶啦，眼冒金星啦...");
-                    setTimeout(() => {
-                      setCurrentProp('none');
-                      setMood('crying');
-                      setTimeout(() => setMood('idle'), 2000);
-                    }, 1400);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(234, 179, 8, 0.2)',
-                    border: '1px solid rgba(234, 179, 8, 0.4)',
-                    color: '#fde047',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  title="挥动小锤子"
-                >
-                  🔨 小锤子
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentProp('glove');
-                    setMood('happy');
-                    soundManager.playPet();
-                    setSpeechText("哇～好软呼呼的猫爪手套抚摸！好舒服喵～");
-                    setTimeout(() => {
-                      setCurrentProp('none');
-                      setMood('idle');
-                    }, 2200);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(168, 85, 247, 0.2)',
-                    border: '1px solid rgba(168, 85, 247, 0.4)',
-                    color: '#d8b4fe',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  title="猫爪手套"
-                >
-                  🐾 猫爪手套
-                </button>
+              <div className="pet-tool-dock" style={{ zIndex: 3, '--pet-accent': char.color }} aria-label="桌宠互动工具">
+                {[
+                  { id: 'pointer', label: '观察', icon: <MousePointer2 size={23} strokeWidth={1.8} /> },
+                  { id: 'pet', label: '手抚摸', image: '/tools/petting-hand.svg' },
+                  { id: 'hammer', label: '小锤子', image: '/tools/hammer.svg' },
+                ].map((tool) => (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    className="pet-tool-button"
+                    aria-pressed={activeTool === tool.id}
+                    onClick={() => setActiveTool(tool.id)}
+                  >
+                    {tool.image ? <img src={tool.image} alt="" /> : tool.icon}
+                    <span>{tool.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="pet-tool-hint" aria-live="polite">
+                {activeTool === 'hammer' ? '小锤子已选中：移到立绘上点击' : activeTool === 'pet' ? '抚摸已选中：按住并在立绘上拖动' : '移动鼠标到立绘上，角色会跟随视线'}
               </div>
 
               {/* 实时 AI 对话交互条 (支持与少女/桌宠实时发问和流式说话) */}
               <div style={{ width: '100%', zIndex: 3, marginBottom: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '7px' }}>
-                  <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 700 }}>💬 与 {char.name.split(' ')[0]} 对话</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: char.accentColor, fontWeight: 700 }}><MessageCircle size={14} /> 与 {char.name.split(' ')[0]} 对话</span>
                   <button
                     type="button"
                     onClick={() => setChatHistories((prev) => ({ ...prev, [currentId]: [] }))}
@@ -1009,7 +899,7 @@ export default function App() {
               <div style={{ width: '100%', zIndex: 2, marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '14px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}>👗 四大形态切换</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: char.accentColor, fontWeight: 600 }}><Shirt size={14} /> 四大形态切换</span>
                     {/* 少女 / 萝莉 / 青年女性 / Q版 4态切换药丸按钮 */}
                     <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '2px', gap: '2px' }}>
                       {[
@@ -1078,56 +968,10 @@ export default function App() {
                       }}
                       title={outfit.desc}
                     >
-                      ✨ {outfit.name}
+                      {outfit.name}
                     </button>
                   ))}
                 </div>
-              </div>
-
-              {/* 快捷互动小动作条 */}
-              <div style={{ display: 'flex', gap: '10px', width: '100%', zIndex: 2, marginBottom: '16px' }}>
-                <button
-                  onClick={handlePetAvatar}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(244, 63, 94, 0.15)',
-                    border: '1px solid rgba(244, 63, 94, 0.3)',
-                    color: '#fda4af',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <Heart size={14} /> 抚摸安慰
-                </button>
-                <button
-                  onClick={() => triggerManualCall(40000, '思维推演连击')}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    borderRadius: '12px',
-                    backgroundColor: `${char.color}25`,
-                    border: `1px solid ${char.color}50`,
-                    color: char.accentColor,
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <Cpu size={14} /> 激活动态思考
-                </button>
               </div>
 
               {/* 拟人背景人设小卡 */}
@@ -1145,7 +989,7 @@ export default function App() {
                 }}
               >
                 <div style={{ color: char.accentColor, fontWeight: 600, marginBottom: '4px' }}>
-                  📖 角色立绘设定集 ({char.modelFamily})
+                  <BookOpen size={14} style={{ verticalAlign: 'middle', marginRight: 5 }} /> 角色立绘设定集 ({char.modelFamily})
                 </div>
                 <div>{char.lore}</div>
               </div>
@@ -1314,7 +1158,7 @@ export default function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                       <div>
                         <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>
-                          🥫 知识与能量投喂商铺
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Package size={16} /> 知识与能量投喂商铺</span>
                         </h3>
                         <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                           为 {char.name.split(' ')[0]} 充能各种优质结构化数据，补充 Token 储备并提升好感度！
@@ -1343,8 +1187,8 @@ export default function App() {
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                            <span style={{ fontSize: '2rem', padding: '6px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)' }}>
-                              {food.icon}
+                            <span style={{ display: 'grid', placeItems: 'center', padding: '4px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)' }}>
+                              <img className="pet-food-image" src={food.image} alt="" />
                             </span>
                             <div style={{ flex: 1 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1359,7 +1203,7 @@ export default function App() {
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                             <span style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>
-                              ⚡ +{fmtTokens(food.tokens)} Tokens · 好感 +{food.moodGain}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Zap size={13} /> +{fmtTokens(food.tokens)} Tokens · 好感 +{food.moodGain}</span>
                             </span>
                             <button
                               onClick={() => handleFeedFood(food)}
@@ -1400,7 +1244,7 @@ export default function App() {
                   >
                     <div>
                       <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>
-                        🚀 快捷真实 API 任务
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Activity size={15} /> 快捷真实 API 任务</span>
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
                         点击后会实际调用当前角色 API，并按返回用量记录；未返回官方用量时会清楚标记为估算
@@ -1454,7 +1298,7 @@ export default function App() {
                   }}
                 >
                   <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '14px', color: '#fff' }}>
-                    📊 四大家族 AI Token 性价比与费率全景看板
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PieChart size={16} /> 四大家族 AI Token 性价比与费率全景看板</span>
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
                     {Object.values(AI_CHARACTERS).map((item) => {
@@ -1533,7 +1377,7 @@ export default function App() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                     <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>
-                      📋 实时 API Token 审计流水记录
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><ClipboardList size={16} /> 实时 API Token 审计流水记录</span>
                     </h3>
                     <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>展示最近 20 条消费明细</span>
                   </div>
@@ -1587,7 +1431,7 @@ export default function App() {
                   }}
                 >
                   <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>
-                    ⚙️ 桌面伴侣偏好 & 费用预警策略
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Settings size={16} /> 桌面伴侣偏好 & 费用预警策略</span>
                   </h3>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -1643,7 +1487,7 @@ export default function App() {
                   {/* API 接口：各家官方协议 + 用户自定义本地兼容接口 */}
                   <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '10px' }}>
-                      🔌 {char.name.split(' ')[0]} API 工作接口
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PlugZap size={15} /> {char.name.split(' ')[0]} API 工作接口</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 0.7fr) 1.3fr', gap: '8px', marginBottom: '8px' }}>
                       <label style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
@@ -1702,7 +1546,7 @@ export default function App() {
                   {/* API 语音输入、语音聊天和播报设置 */}
                   <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '8px' }}>
-                      🎙 语音输入配置
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Mic size={15} /> 语音输入配置</span>
                     </div>
                     <label style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
                       语音转写 API Base URL

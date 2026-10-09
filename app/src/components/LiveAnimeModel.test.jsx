@@ -1,0 +1,91 @@
+import React, { act } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRoot } from 'react-dom/client';
+import { LiveAnimeModel } from './LiveAnimeModel';
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+let container;
+let root;
+
+const render = (props) => {
+  act(() => {
+    root.render(<LiveAnimeModel {...props} />);
+  });
+  return container.querySelector('.dynamic-pet-stage');
+};
+
+const fire = (element, type, init = {}) => {
+  act(() => {
+    const event = new window.MouseEvent(type, { bubbles: true, cancelable: true, ...init });
+    Object.defineProperty(event, 'pointerId', { value: init.pointerId ?? 1 });
+    element.dispatchEvent(event);
+  });
+};
+
+beforeEach(() => {
+  container = document.createElement('div');
+  document.body.appendChild(container);
+  root = createRoot(container);
+});
+
+afterEach(() => {
+  act(() => root.unmount());
+  container.remove();
+});
+
+describe('LiveAnimeModel 鼠标工具交互', () => {
+  it('选中小锤子后光标为锤子图像，点击立绘触发锤击动画与回调', () => {
+    const onHammer = vi.fn();
+    const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'hammer', onHammer });
+    expect(stage.style.cursor).toContain('/cursors/hammer.svg');
+    fire(stage, 'pointerdown', { clientX: 120, clientY: 160 });
+    expect(onHammer).toHaveBeenCalledTimes(1);
+    const impact = container.querySelector('.pet-impact-layer');
+    expect(impact).not.toBeNull();
+    expect(impact.querySelector('.pet-impact-hammer').getAttribute('src')).toBe('/tools/hammer.svg');
+  });
+
+  it('选中抚摸后光标为手部图像，按住拖动产生连续反馈，抬起停止', () => {
+    const onPet = vi.fn();
+    const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pet', onPet });
+    expect(stage.style.cursor).toContain('/cursors/petting-hand.svg');
+    fire(stage, 'pointerdown', { clientX: 100, clientY: 90 });
+    expect(onPet).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('.pet-touch-ripple')).not.toBeNull();
+    fire(stage, 'pointermove', { clientX: 130, clientY: 110 });
+    expect(container.querySelector('.pet-touch-ripple')).not.toBeNull();
+    fire(stage, 'pointerup', {});
+    expect(container.querySelector('.pet-touch-ripple')).toBeNull();
+  });
+
+  it('观察模式下点击立绘不触发道具动画', () => {
+    const onPet = vi.fn();
+    const onHammer = vi.fn();
+    const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer', onPet, onHammer });
+    expect(stage.style.cursor).toBe('default');
+    fire(stage, 'pointerdown', { clientX: 110, clientY: 140 });
+    expect(onPet).not.toHaveBeenCalled();
+    expect(onHammer).not.toHaveBeenCalled();
+    expect(container.querySelector('.pet-impact-layer')).toBeNull();
+  });
+
+  it('键盘 Enter 在锤子模式下同样触发锤击', () => {
+    const onHammer = vi.fn();
+    const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'hammer', onHammer });
+    act(() => {
+      stage.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    });
+    expect(onHammer).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('.pet-impact-layer')).not.toBeNull();
+  });
+
+  it('小寻四种形态分别使用重绘后的高清立绘', () => {
+    const stage = render({ characterId: 'deepseek', form: 'chibi', activeTool: 'pointer' });
+    expect(stage.querySelector('.pet-portrait-image').getAttribute('src')).toBe('/characters/deepseek_chibi_live.png');
+    act(() => {
+      root.render(<LiveAnimeModel characterId="deepseek" form="mature" activeTool="pointer" />);
+    });
+    expect(container.querySelector('.pet-portrait-image').getAttribute('src')).toBe('/characters/deepseek_mature_live.png');
+  });
+});

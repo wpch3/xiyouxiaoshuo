@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, FilePlus2, FolderOpen, Link2, Play, Plus, RefreshCw, Send, Trash2, Users, WandSparkles, X } from 'lucide-react';
+import { Check, Download, FilePlus2, FolderOpen, Link2, Play, Plus, RefreshCw, Send, Trash2, Users, WandSparkles, X } from 'lucide-react';
 import { aiService } from '../utils/aiService';
 import {
   deleteLocalDocument,
@@ -76,7 +76,7 @@ export const WorkspacePanel = ({ character, provider, documents = [], isChatBusy
       <section style={panelStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap' }}>
           <div>
-            <h3 style={{ color: '#f8fafc', fontSize: '1rem', marginBottom: '5px' }}>🧰 API 工作区</h3>
+            <h3 style={{ color: '#f8fafc', fontSize: '1rem', marginBottom: '5px' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><WandSparkles size={16} /> API 工作区</span></h3>
             <p style={{ color: '#94a3b8', fontSize: '0.76rem', lineHeight: 1.5 }}>
               当前：{character.name} · {character.modelFamily}。选中的本机资料可作为上下文；生成话题或执行任务会调用当前角色 API。
             </p>
@@ -161,7 +161,7 @@ export const LibraryPanel = ({ documents, setDocuments, accentColor = '#60A5FA' 
       <section style={panelStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div>
-            <h3 style={{ color: '#f8fafc', fontSize: '1rem', marginBottom: '5px' }}>📚 文件保存区</h3>
+            <h3 style={{ color: '#f8fafc', fontSize: '1rem', marginBottom: '5px' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><FolderOpen size={16} /> 文件保存区</span></h3>
             <p style={{ color: '#94a3b8', fontSize: '0.74rem', lineHeight: 1.5 }}>文件保存在本机 IndexedDB，不会自动上传。TXT/MD/代码等文本可勾选后作为对话/Agent 上下文（请求时会发送给当前 API，可能增加用量）；其他文件可本机下载保存。</p>
           </div>
           <label style={{ ...primaryButtonStyle(accentColor), cursor: working ? 'wait' : 'pointer' }}>
@@ -316,7 +316,7 @@ export const AgentPanel = ({ provider, character, characters, documents = [], on
     <div style={{ display: 'grid', gap: '14px' }}>
       <section style={panelStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <div><h3 style={{ color: '#f8fafc', fontSize: '1rem', marginBottom: '4px' }}>🤖 Agent 工作区</h3><p style={{ color: '#94a3b8', fontSize: '0.72rem' }}>Agent 可读取你指定的文件并把内容发送到当前 API（不要选择含密钥/密码的文件）；写入和命令都会显示目标并要求确认。</p></div>
+          <div><h3 style={{ color: '#f8fafc', fontSize: '1rem', marginBottom: '4px' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Play size={16} /> Agent 工作区</span></h3><p style={{ color: '#94a3b8', fontSize: '0.72rem' }}>Agent 可读取你指定的文件并把内容发送到当前 API（不要选择含密钥/密码的文件）；写入和命令都会显示目标并要求确认。</p></div>
           <button type="button" onClick={chooseWorkspace} style={primaryButtonStyle('#8b5cf6')}><FolderOpen size={14} />选择工作目录</button>
         </div>
         <div style={{ marginTop: '8px', color: workspace ? '#cbd5e1' : '#64748b', fontSize: '0.7rem', overflowWrap: 'anywhere' }}>{workspace || '尚未选择本机工作目录'}{!hasDesktopBridge && ' · 当前网页预览不开放本机命令/文件系统权限'}</div>
@@ -439,7 +439,7 @@ export const SocialPanel = ({ characters, onUsage = () => {} }) => {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
           {Object.values(characters).map((character) => {
             const active = participants.includes(character.id);
-            return <button key={character.id} type="button" disabled={busy} onClick={() => toggleParticipant(character.id)} style={{ ...primaryButtonStyle(active ? character.color : '#64748b'), padding: '6px 9px', opacity: busy ? 0.55 : participants.length >= 4 && !active ? 0.5 : 1 }}>{active ? '✓ ' : ''}{character.name.split(' ')[0]}</button>;
+            return <button key={character.id} type="button" disabled={busy} onClick={() => toggleParticipant(character.id)} style={{ ...primaryButtonStyle(active ? character.color : '#64748b'), padding: '6px 9px', opacity: busy ? 0.55 : participants.length >= 4 && !active ? 0.5 : 1 }}>{active && <Check size={13} aria-hidden="true" />}{character.name.split(' ')[0]}</button>;
           })}
         </div>
       </section>
