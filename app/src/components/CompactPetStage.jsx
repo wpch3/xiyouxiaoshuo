@@ -53,7 +53,7 @@ export const CompactPetStage = ({
     // 原生小窗：窗口整体随缩放贴合角色（无黑边）
     const api = window.pywebview && window.pywebview.api;
     if (api && api.resize_pet_window) {
-      api.resize_pet_window(Math.round(250 * scale) + 30, Math.round(250 * scale * 1.42) + 30);
+      api.resize_pet_window(Math.round(250 * scale) + 30, Math.round(250 * scale * 1.62) + 30);
     }
   }, [scale]);
 

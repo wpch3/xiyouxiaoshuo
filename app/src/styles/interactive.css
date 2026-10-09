@@ -77,7 +77,7 @@
 .dynamic-pet-stage {
   position: relative;
   flex: 0 0 auto;
-  overflow: visible;
+  overflow: hidden;
   isolation: isolate;
   border-radius: 28px;
   outline: none;

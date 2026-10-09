@@ -40,7 +40,7 @@ export const LiveAnimeModel = ({
   const [imageSrc, setImageSrc] = useState(getPortraitPath(characterId, form));
   const fallbackImage = `/characters/${characterId}.png`;
   const rig = getPetRig(characterId, form);
-  const height = size * 1.5;
+  const height = Math.round(size * 1.62);
 
   useEffect(() => {
     setImageSrc(getPortraitPath(characterId, form));
@@ -150,8 +150,8 @@ export const LiveAnimeModel = ({
       <div
         className={`pet-pose-layer ${isPetting ? 'is-petting' : ''} ${mood === 'happy' ? 'is-happy' : ''} ${mood === 'hammered' ? 'is-hit' : ''} ${isSpeaking ? 'is-speaking' : ''}`}
         style={{
-          transform: `${form === 'chibi' ? `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg) ` : ''}scale(${scale})`,
-          transformOrigin: '50% 86%'
+          transform: `${form === 'chibi' ? `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg) ` : ''}scale(${0.9 * scale})`,
+          transformOrigin: '50% 100%'
         }}
       >
         {rig ? (

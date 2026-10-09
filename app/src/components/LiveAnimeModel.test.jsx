@@ -67,8 +67,8 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer', scale: 1.4 });
     expect(stage.style.width).not.toContain('1.4');
     const pose = container.querySelector('.pet-pose-layer');
-    expect(pose.style.transform).toContain('scale(1.4)');
-    expect(pose.style.transformOrigin).toBe('50% 86%');
+    expect(pose.style.transform).toContain('scale(1.26)');
+    expect(pose.style.transformOrigin).toBe('50% 100%');
   });
 
   it('观察模式下点击立绘不触发道具动画', () => {
