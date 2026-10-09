@@ -56,6 +56,29 @@ def _messages_for_api(messages: list[dict[str, str]], system_prompt: str) -> lis
     return result
 
 
+def _gemini_contents(conversation: list[dict[str, str]]) -> list[dict[str, Any]]:
+    """Normalize chat history for Gemini's user/model turn requirements."""
+    contents: list[dict[str, Any]] = []
+    for item in conversation:
+        role = "model" if item["role"] == "assistant" else "user"
+        text = str(item.get("content") or "")
+        if contents and contents[-1]["role"] == role:
+            contents[-1]["parts"][0]["text"] += f"\n\n{text}"
+        else:
+            contents.append({"role": role, "parts": [{"text": text}]})
+
+    # Gemini generateContent requires the final history turn to be from the user.
+    # In multi-character chat, previous characters are represented as model turns;
+    # ask Gemini to continue from that dialogue instead of sending an invalid tail.
+    if contents and contents[-1]["role"] == "model":
+        latest_user = next((item["content"] for item in reversed(conversation) if item["role"] == "user"), "")
+        continuation = "请结合上方群聊内容继续回应。"
+        if latest_user:
+            continuation += f"\n请回应用户提出的话题：\n{latest_user}"
+        contents.append({"role": "user", "parts": [{"text": continuation}]})
+    return contents
+
+
 def _estimate_tokens(text: str) -> int:
     """Fallback estimate only; the response always labels it as estimated."""
     cjk = sum(1 for char in text if "\u3400" <= char <= "\u9fff")
@@ -121,10 +144,7 @@ def chat_completion(
         quoted_model = urllib.parse.quote(model, safe="-_.")
         query = urllib.parse.urlencode({"key": api_key})
         url = f"{base_url.rstrip('/')}/models/{quoted_model}:generateContent?{query}"
-        contents = [
-            {"role": "model" if item["role"] == "assistant" else "user", "parts": [{"text": item["content"]}]}
-            for item in conversation
-        ]
+        contents = _gemini_contents(conversation)
         payload = {"contents": contents}
         if system_prompt:
             payload["systemInstruction"] = {"parts": [{"text": system_prompt}]}
