@@ -87,6 +87,32 @@ class DesktopPetAPI:
             except Exception:
                 pass
 
+    def toggle_click_through(self):
+        """小窗鼠标穿透开关（Win32 WS_EX_TRANSPARENT）：开启后小窗不接收任何鼠标事件，
+        不影响桌面工作；恢复方式=主窗浮宠按钮关闭后重新召唤（新窗不带穿透）。"""
+        import sys as _sys
+        if _sys.platform != "win32" or self._pet_window is None:
+            return False
+        try:
+            import ctypes
+            hwnd = getattr(self._pet_window, "hwnd", None)
+            if not hwnd:
+                hwnd = getattr(getattr(self._pet_window, "gui", None), "hwnd", None)
+            if not hwnd:
+                return False
+            GWL_EXSTYLE = -20
+            WS_EX_TRANSPARENT = 0x00000020
+            WS_EX_LAYERED = 0x00080000
+            user32 = ctypes.WinDLL("user32", use_last_error=True)
+            ex = user32.GetWindowLongW(int(hwnd), GWL_EXSTYLE)
+            if ex & WS_EX_TRANSPARENT:
+                user32.SetWindowLongW(int(hwnd), GWL_EXSTYLE, ex & ~WS_EX_TRANSPARENT)
+                return False
+            user32.SetWindowLongW(int(hwnd), GWL_EXSTYLE, ex | WS_EX_TRANSPARENT | WS_EX_LAYERED)
+            return True
+        except Exception:
+            return False
+
     def close_floating_pet(self):
         if self._pet_window is not None:
             self._pet_window.destroy()

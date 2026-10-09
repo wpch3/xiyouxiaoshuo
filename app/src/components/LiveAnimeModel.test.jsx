@@ -63,11 +63,12 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
     expect(container.querySelector('.pet-touch-ripple')).toBeNull();
   });
 
-  it('缩放只作用于角色层，舞台盒与背景保持静止', () => {
+  it('缩放由舞台盒同步生长承担（v2 几何：不裁切不溢出），pose 层不再二次缩放', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer', scale: 1.4 });
-    expect(stage.style.width).not.toContain('1.4');
+    expect(stage.style.width).toBe(`${Math.round(320 * (0.9 * 1.4 + 0.1))}px`);
+    expect(stage.style.height).toBe(`${Math.round(320 * 1.62 * 0.9 * 1.4 + 320 * 0.16)}px`);
     const pose = container.querySelector('.pet-pose-layer');
-    expect(pose.style.transform).toContain('scale(1.26)');
+    expect(pose.style.transform).toContain('scale(1)');
     expect(pose.style.transformOrigin).toBe('50% 100%');
   });
 
@@ -149,7 +150,7 @@ describe('分层立绘 rig（拆件）', () => {
     const brows = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/brows.png"]');
     const gazeMatch = iris.style.transform.match(/translate\(([-0-9.]+)px, ([-0-9.]+)px\)/);
     expect(gazeMatch).not.toBeNull();
-    expect(Number(gazeMatch[1]).toFixed(2)).toBe('4.90');
+    expect(Number(gazeMatch[1]).toFixed(2)).toBe('2.94'); // 眼开口物理余量限幅 ±3px
     expect(Number(gazeMatch[2]).toFixed(2)).toBe('1.40');
     expect(container.querySelector('.pet-rig-gaze').style.clipPath).toBe('');
     expect(getPetRig('deepseek', 'chibi').layers).toHaveLength(1);
@@ -244,8 +245,8 @@ describe('自检：口型节奏 / 视线缓动 / 舞台几何', () => {
     await act(async () => {
       await new Promise((r) => setTimeout(r, 800));
     });
-    expect(gaze.style.transform).toBe('translate(0.70px, 0.00px)');
-    expect(immediate).not.toBe('translate(0.70px, 0.00px)');
+    expect(gaze.style.transform).toBe('translate(0.42px, 0.00px)');
+    expect(immediate).not.toBe('translate(0.42px, 0.00px)');
   });
 
   it('舞台几何：背景加高、角色锚底缩放、缩放不溢出控件', () => {
@@ -254,7 +255,7 @@ describe('自检：口型节奏 / 视线缓动 / 舞台几何', () => {
     expect(stage.style.width).toBe(`${Math.round(320 * (0.9 * 1.5 + 0.1))}px`);
     const pose = stage.querySelector('.pet-pose-layer');
     expect(pose.style.transformOrigin).toBe('50% 100%');
-    expect(pose.style.transform).toContain(`scale(${0.9 * 1.5})`);
+    expect(pose.style.transform).toContain('scale(1)');
     expect(stage.className).toContain('dynamic-pet-stage');
   });
 });

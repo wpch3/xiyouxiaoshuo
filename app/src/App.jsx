@@ -631,7 +631,8 @@ export default function App() {
           />
         ) : (
           /* 完整仪表盘模式 */
-          <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px', height: '100%', minHeight: 0 }}>
+          <div className="app-main-grid">
+            <div className="app-left-col">
             {/* 左侧：拟人角色舞台与互动专区 */}
             <div
               className="pet-main-card"
@@ -823,6 +824,9 @@ export default function App() {
                 {activeTool === 'hammer' ? '小锤子已选中：移到立绘上点击' : activeTool === 'pet' ? '抚摸已选中：按住并在立绘上拖动' : '移动鼠标到立绘上，角色会跟随视线'}
               </div>
 
+              </div>
+
+              <div style={{ width: '100%', borderRadius: '24px', border: `1px solid ${char.color}35`, background: 'rgba(15, 23, 42, 0.55)', padding: '16px 18px', backdropFilter: 'blur(8px)' }}>
               {/* 实时 AI 对话交互条 (支持与少女/桌宠实时发问和流式说话) */}
               <div style={{ width: '100%', zIndex: 3, marginBottom: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '7px' }}>
@@ -901,6 +905,9 @@ export default function App() {
                 </div>
               </div>
 
+              </div>
+
+              <div style={{ width: '100%', borderRadius: '24px', border: `1px solid ${char.color}35`, background: 'rgba(15, 23, 42, 0.55)', padding: '14px 16px', backdropFilter: 'blur(8px)' }}>
               {/* 立绘形态与服饰切换 (完整支持 少女 / 萝莉 / 青年女性 / Q版萌宠 四种形态) */}
               <div style={{ width: '100%', zIndex: 2, marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '14px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -999,6 +1006,7 @@ export default function App() {
                 </div>
                 <div>{char.lore}</div>
               </div>
+            </div>
             </div>
 
             {/* 右侧：多功能控制台 (投喂、仪表盘、消费流水、模型定价对比) */}

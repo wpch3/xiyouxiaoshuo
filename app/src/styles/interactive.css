@@ -584,3 +584,12 @@ body.pet-compact-body .compact-stage { background: transparent !important; }
 .compact-stage .dynamic-pet-stage { background: transparent; box-shadow: none; border-radius: 0; }
 /* 原生透明窗：品红为 Win32 LWA_COLORKEY 键色 */
 body.pet-native-window, body.pet-native-window .compact-stage { background: transparent !important; }
+
+/* ── 主布局响应式与左栏分卡（v2 重构） ── */
+.app-main-grid { display: grid; grid-template-columns: 380px 1fr; gap: 24px; height: 100%; min-height: 0; }
+.app-left-col { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow-y: auto; padding-right: 2px; }
+@media (max-width: 1100px) { .app-main-grid { grid-template-columns: 340px 1fr; gap: 16px; } }
+@media (max-width: 860px) {
+  .app-main-grid { grid-template-columns: 1fr; height: auto; overflow: visible; }
+  .app-left-col { overflow: visible; }
+}

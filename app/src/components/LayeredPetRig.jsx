@@ -69,8 +69,8 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
     return () => window.cancelAnimationFrame(raf);
   }, []);
 
-  const gazeX = clamp((look.x || 0) * 0.7, -5, 5);
-  const gazeY = clamp((look.y || 0) * 0.35, -2.5, 2.5);
+  const gazeX = clamp((look.x || 0) * 0.42, -3, 3);
+  const gazeY = clamp((look.y || 0) * 0.35, -1.5, 1.5);
   gazeTargetRef.current = { x: gazeX, y: gazeY };
   const browShift = mood === 'happy' ? -2.5 : mood === 'hammered' ? 1.5 : 0;
 

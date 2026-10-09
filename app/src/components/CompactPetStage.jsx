@@ -50,6 +50,12 @@ export const CompactPetStage = ({
   const rootRef = useRef(null);
 
   useEffect(() => {
+    if (contained) return undefined;
+    document.body.classList.add('pet-compact-body');
+    return () => document.body.classList.remove('pet-compact-body');
+  }, [contained]);
+
+  useEffect(() => {
     localStorage.setItem(SCALE_KEY, JSON.stringify(scale));
     // 原生小窗：窗口整体随缩放贴合角色（无黑边）
     const api = window.pywebview && window.pywebview.api;
@@ -122,6 +128,9 @@ export const CompactPetStage = ({
     { key: 'zoom-in', label: `放大（${Math.round(scale * 100)}%）`, icon: <ZoomIn size={15} />, onClick: () => zoomBy(1.25) },
     { key: 'zoom-out', label: '缩小', icon: <ZoomOut size={15} />, onClick: () => zoomBy(0.8) },
     { key: 'zoom-reset', label: '恢复默认大小', icon: <RotateCcw size={15} />, onClick: () => setScale(1) },
+    ...(typeof window !== 'undefined' && window.pywebview?.api?.toggle_click_through
+      ? [{ key: 'click-through', label: '鼠标穿透开关', icon: <MousePointer2 size={15} />, onClick: () => window.pywebview.api.toggle_click_through() }]
+      : []),
     { key: 'sep-2', separator: true },
     { key: 'workspace', label: '召唤工作区', icon: <Maximize2 size={15} />, onClick: onOpenWorkspace },
     ...(onChooseWorkspace
@@ -135,7 +144,9 @@ export const CompactPetStage = ({
       ref={rootRef}
       className={contained ? 'compact-stage is-contained' : 'compact-stage'}
       onContextMenu={openMenu}
-      style={{ '--pet-accent': accentColor }}
+      style={contained
+        ? { '--pet-accent': accentColor, width: Math.round(230 * (0.9 * scale + 0.1)) + 20, height: Math.round(230 * 1.62 * 0.9 * scale + 230 * 0.16) + 56 }
+        : { '--pet-accent': accentColor }}
     >
       {speechText && <div className="compact-stage-speech" aria-live="polite">{speechText}</div>}
 

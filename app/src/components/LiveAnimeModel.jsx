@@ -164,7 +164,7 @@ export const LiveAnimeModel = ({
       <div
         className={`pet-pose-layer ${isPetting ? 'is-petting' : ''} ${mood === 'happy' ? 'is-happy' : ''} ${mood === 'hammered' ? 'is-hit' : ''} ${isSpeaking ? 'is-speaking' : ''}`}
         style={{
-          transform: `${form === 'chibi' ? `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg) ` : ''}scale(${POSE_FILL * scale})`,
+          transform: `${form === 'chibi' ? `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg) ` : ''}scale(1)`,
           transformOrigin: '50% 100%',
         }}
       >
