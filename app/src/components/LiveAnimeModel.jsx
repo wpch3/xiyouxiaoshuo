@@ -21,6 +21,7 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 export const LiveAnimeModel = ({
   characterId = 'deepseek',
   form = 'normal',
+  scale = 1,
   mood = 'idle',
   activeTool = 'pointer',
   isSpeaking = false,
@@ -148,7 +149,10 @@ export const LiveAnimeModel = ({
 
       <div
         className={`pet-pose-layer ${isPetting ? 'is-petting' : ''} ${mood === 'happy' ? 'is-happy' : ''} ${mood === 'hammered' ? 'is-hit' : ''} ${isSpeaking ? 'is-speaking' : ''}`}
-        style={form === 'chibi' ? { transform: `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg)` } : undefined}
+        style={{
+          transform: `${form === 'chibi' ? `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg) ` : ''}scale(${scale})`,
+          transformOrigin: '50% 86%'
+        }}
       >
         {rig ? (
           <LayeredPetRig rig={rig} isSpeaking={isSpeaking} look={{ x: look.x, y: look.y }} mood={mood} className="pet-portrait-image" fallbackSrc={imageSrc} />

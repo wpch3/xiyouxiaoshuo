@@ -63,6 +63,14 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
     expect(container.querySelector('.pet-touch-ripple')).toBeNull();
   });
 
+  it('缩放只作用于角色层，舞台盒与背景保持静止', () => {
+    const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer', scale: 1.4 });
+    expect(stage.style.width).not.toContain('1.4');
+    const pose = container.querySelector('.pet-pose-layer');
+    expect(pose.style.transform).toContain('scale(1.4)');
+    expect(pose.style.transformOrigin).toBe('50% 86%');
+  });
+
   it('观察模式下点击立绘不触发道具动画', () => {
     const onPet = vi.fn();
     const onHammer = vi.fn();
@@ -99,7 +107,7 @@ describe('分层立绘 rig（拆件）', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
     const rig = stage.querySelector('.pet-rig');
     expect(rig).not.toBeNull();
-    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(17); // 12 单图层 + 5 口型帧
+    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(18); // 13 单图层 + 5 口型帧
     expect(rig.querySelectorAll('.pet-rig-talk')).toHaveLength(5);
     expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_rig.png');
     const wave = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_wave.png"]');

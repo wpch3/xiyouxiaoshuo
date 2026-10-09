@@ -77,7 +77,7 @@
 .dynamic-pet-stage {
   position: relative;
   flex: 0 0 auto;
-  overflow: hidden;
+  overflow: visible;
   isolation: isolate;
   border-radius: 28px;
   outline: none;
@@ -571,3 +571,10 @@
 .compact-stage .pet-tool-hint { display: none; }
 body.pet-compact-body { overflow: hidden; background: transparent !important; }
 body.pet-compact-body .compact-stage { background: transparent !important; }
+
+/* 小窗：去掉网页卡片感，只留角色 */
+.compact-stage .pet-stage-caption { display: none; }
+.compact-stage .pet-stage-backdrop { display: none; }
+.compact-stage .dynamic-pet-stage { background: transparent; box-shadow: none; border-radius: 0; }
+/* 原生透明窗：品红为 Win32 LWA_COLORKEY 键色 */
+body.pet-native-window, body.pet-native-window .compact-stage { background: #FF00FF !important; }

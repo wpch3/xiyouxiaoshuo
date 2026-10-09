@@ -141,7 +141,8 @@ export const CompactPetStage = ({
           accentColor={accentColor}
           onPet={onPet}
           onHammer={onHammer}
-          size={Math.round(230 * scale)}
+          size={230}
+          scale={scale}
         />
       </div>
 

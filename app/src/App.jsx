@@ -768,7 +768,8 @@ export default function App() {
                   accentColor={char.accentColor}
                   onPet={handlePetAvatar}
                   onHammer={handleHammerAvatar}
-                  size={Math.round(320 * petScale)}
+                  size={320}
+                  scale={petScale}
                 />
               </div>
 
@@ -808,7 +809,7 @@ export default function App() {
                 <div
                   aria-live="polite"
                   style={{
-                    display: 'flex', flexDirection: 'column', gap: '7px', maxHeight: '220px', overflowY: 'auto',
+                    display: 'flex', flexDirection: 'column', gap: '7px', maxHeight: 'min(220px, 26vh)', overflowY: 'auto',
                     padding: '8px', borderRadius: '12px', background: 'rgba(0,0,0,0.24)',
                     border: '1px solid rgba(255,255,255,0.06)', marginBottom: '8px'
                   }}

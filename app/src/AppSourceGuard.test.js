@@ -8,7 +8,7 @@ const appSource = readFileSync(resolve(process.cwd(), 'src/App.jsx'), 'utf-8');
 describe('App.jsx 源码守卫', () => {
   it('petScale 状态声明存在且先于使用', () => {
     const decl = appSource.indexOf('const [petScale, setPetScale] = useState(');
-    const use = appSource.indexOf('Math.round(320 * petScale)');
+    const use = appSource.indexOf('scale={petScale}');
     expect(decl).toBeGreaterThan(-1);
     expect(use).toBeGreaterThan(-1);
     expect(decl).toBeLessThan(use);
