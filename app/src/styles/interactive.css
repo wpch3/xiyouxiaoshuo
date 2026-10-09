@@ -566,7 +566,12 @@
 .pet-ctx-item.is-active { background: color-mix(in srgb, var(--pet-accent, #79A8F4) 26%, transparent); }
 .pet-ctx-icon { display: grid; place-items: center; width: 17px; height: 17px; }
 .pet-ctx-sep { height: 1px; margin: 5px 8px; background: rgba(255,255,255,.10); }
-.compact-stage.is-contained { position: absolute; border-radius: 14px; }
+.compact-stage.is-contained {
+  position: absolute; inset: auto; right: 22px; bottom: 22px;
+  width: 330px; height: 480px; border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .55);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
 
 /* 小窗（桌面宠物）：隐藏网页式提示条；配合 pywebview 透明窗 */
 .compact-stage .pet-tool-hint { display: none; }

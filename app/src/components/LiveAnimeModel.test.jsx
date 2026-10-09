@@ -94,7 +94,7 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
 
   it('小寻四种形态分别使用重绘后的高清立绘', () => {
     const stage = render({ characterId: 'deepseek', form: 'chibi', activeTool: 'pointer' });
-    expect(stage.querySelector('.pet-portrait-image').getAttribute('src')).toBe('/characters/deepseek_chibi_live.png');
+    expect(stage.querySelector('.pet-rig-layer').getAttribute('src')).toBe('/characters/deepseek_chibi.png');
     act(() => {
       root.render(<LiveAnimeModel characterId="deepseek" form="mature" activeTool="pointer" />);
     });
@@ -151,7 +151,8 @@ describe('分层立绘 rig（拆件）', () => {
     expect(gazeMatch).not.toBeNull();
     expect(Number(gazeMatch[1]).toFixed(2)).toBe('4.90');
     expect(Number(gazeMatch[2]).toFixed(2)).toBe('1.40');
-    expect(getPetRig('deepseek', 'normal').clip).toContain('ellipse(');
+    expect(container.querySelector('.pet-rig-gaze').style.clipPath).toBe('');
+    expect(getPetRig('deepseek', 'chibi').layers).toHaveLength(1);
     expect(brows.style.transform).toBe('translateY(-2.5px)');
     act(() => {
       root.render(<LayeredPetRig rig={rigDef} look={{ x: 0, y: 0 }} mood="hammered" />);
@@ -249,7 +250,8 @@ describe('自检：口型节奏 / 视线缓动 / 舞台几何', () => {
 
   it('舞台几何：背景加高、角色锚底缩放、缩放不溢出控件', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', scale: 1.5, size: 320 });
-    expect(stage.style.height).toBe(`${Math.round(320 * 1.62)}px`);
+    expect(stage.style.height).toBe(`${Math.round(320 * 1.62 * 0.9 * 1.5 + 320 * 0.16)}px`);
+    expect(stage.style.width).toBe(`${Math.round(320 * (0.9 * 1.5 + 0.1))}px`);
     const pose = stage.querySelector('.pet-pose-layer');
     expect(pose.style.transformOrigin).toBe('50% 100%');
     expect(pose.style.transform).toContain(`scale(${0.9 * 1.5})`);

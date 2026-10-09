@@ -74,8 +74,9 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
   gazeTargetRef.current = { x: gazeX, y: gazeY };
   const browShift = mood === 'happy' ? -2.5 : mood === 'hammered' ? 1.5 : 0;
 
-  if (isBroken && fallbackSrc) {
-    return <img className={className} src={fallbackSrc} alt="桌宠立绘" draggable="false" />;
+  if (isBroken || !rig || !rig.layers) {
+    if (fallbackSrc) return <img className={className} src={fallbackSrc} alt="桌宠立绘" draggable="false" />;
+    return null;
   }
 
   return (
@@ -104,7 +105,6 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
         if (layer.mode === 'gaze') transform = `translate(${gazeX}px, ${gazeY}px)`;
         if (layer.mode === 'brow') transform = `translateY(${browShift}px)`;
         const style = { zIndex: layer.z, opacity: visible ? 1 : 0, transform };
-        if (layer.mode === 'gaze' && rig.clip) style.clipPath = rig.clip;
         return (
           <img
             ref={layer.mode === 'gaze' ? gazeRef : undefined}

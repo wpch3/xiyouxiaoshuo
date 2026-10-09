@@ -44,7 +44,8 @@ export const CompactPetStage = ({
   onClose = () => {},
   contained = false
 }) => {
-  const [scale, setScale] = useState(readScale);
+  const maxScale = contained ? 1.5 : MAX_SCALE;
+  const [scale, setScale] = useState(() => Math.min(contained ? 1.5 : MAX_SCALE, readScale()));
   const [menu, setMenu] = useState(null);
   const rootRef = useRef(null);
 
@@ -53,7 +54,10 @@ export const CompactPetStage = ({
     // 原生小窗：窗口整体随缩放贴合角色（无黑边）
     const api = window.pywebview && window.pywebview.api;
     if (api && api.resize_pet_window) {
-      api.resize_pet_window(Math.round(250 * scale) + 30, Math.round(250 * scale * 1.62) + 30);
+      api.resize_pet_window(
+        Math.round(230 * (0.9 * scale + 0.1)) + 14,
+        Math.round(230 * 1.62 * 0.9 * scale + 230 * 0.16) + 14
+      );
     }
   }, [scale]);
 
@@ -63,7 +67,7 @@ export const CompactPetStage = ({
     const onWheel = (event) => {
       setScale((value) => {
         const next = value * (event.deltaY < 0 ? 1.12 : 0.9);
-        return Math.min(MAX_SCALE, Math.max(MIN_SCALE, Number(next.toFixed(2))));
+        return Math.min(maxScale, Math.max(MIN_SCALE, Number(next.toFixed(2))));
       });
     };
     node.addEventListener('wheel', onWheel, { passive: true });
@@ -98,7 +102,7 @@ export const CompactPetStage = ({
     });
   };
 
-  const zoomBy = (factor) => setScale((value) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, Number((value * factor).toFixed(2)))));
+  const zoomBy = (factor) => setScale((value) => Math.min(maxScale, Math.max(MIN_SCALE, Number((value * factor).toFixed(2)))));
 
   const toolEntries = [
     { id: 'pointer', label: '观察', icon: <MousePointer2 size={15} strokeWidth={1.9} /> },

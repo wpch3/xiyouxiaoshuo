@@ -879,7 +879,7 @@ export default function App() {
                   ))}
                 </div>
 
-                <form onSubmit={(e) => { e.preventDefault(); sendChatMessage(); }} style={{ display: 'flex', gap: '6px' }}>
+                <form onSubmit={(e) => { e.preventDefault(); sendChatMessage(); }} style={{ display: 'flex', gap: '6px', position: 'sticky', bottom: '8px', zIndex: 6, padding: '8px', borderRadius: '12px', background: 'rgba(10, 14, 26, 0.92)', backdropFilter: 'blur(6px)', boxShadow: '0 -6px 18px rgba(0, 0, 0, 0.35)' }}>
                   <input
                     type="text"
                     value={userChatInput}

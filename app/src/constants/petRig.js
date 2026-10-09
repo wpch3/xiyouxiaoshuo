@@ -42,6 +42,11 @@ export const PET_RIGS = {
         { id: 'bangs', src: '/characters/deepseek_layers/bangs.png', mode: 'sway', z: 13 },
       ],
     },
+    chibi: {
+      width: 424,
+      height: 632,
+      layers: [{ id: 'portrait', src: '/characters/deepseek_chibi.png', mode: 'base', z: 0 }],
+    },
   },
 };
 

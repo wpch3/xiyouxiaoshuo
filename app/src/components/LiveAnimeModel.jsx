@@ -40,7 +40,9 @@ export const LiveAnimeModel = ({
   const [imageSrc, setImageSrc] = useState(getPortraitPath(characterId, form));
   const fallbackImage = `/characters/${characterId}.png`;
   const rig = getPetRig(characterId, form);
-  const height = Math.round(size * 1.62);
+  const poseK = 0.9 * scale;
+  const width = Math.round(size * (poseK + 0.1));
+  const height = Math.round(size * 1.62 * poseK + size * 0.16);
 
   useEffect(() => {
     setImageSrc(getPortraitPath(characterId, form));
@@ -127,7 +129,7 @@ export const LiveAnimeModel = ({
     <div
       ref={stageRef}
       className={`dynamic-pet-stage tool-${activeTool} mood-${mood} form-${form}`}
-      style={{ width: size, height, '--pet-accent': accentColor, cursor }}
+      style={{ width, height, '--pet-accent': accentColor, cursor }}
       role="button"
       tabIndex={0}
       aria-label={`${characterId} 桌宠互动区域`}
