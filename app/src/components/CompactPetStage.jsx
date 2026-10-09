@@ -67,7 +67,11 @@ export const CompactPetStage = ({
 
   useEffect(() => {
     if (!menu) return undefined;
-    const close = () => setMenu(null);
+    const close = (event) => {
+      // 菜单内部按下不关闭（否则 capture 阶段先卸载菜单，click 永远落不到按钮上）
+      if (event && event.target && event.target.closest && event.target.closest('.pet-ctx-menu')) return;
+      setMenu(null);
+    };
     const onKey = (event) => {
       if (event.key === 'Escape') setMenu(null);
     };

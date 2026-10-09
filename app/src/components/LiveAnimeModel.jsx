@@ -125,7 +125,7 @@ export const LiveAnimeModel = ({
   return (
     <div
       ref={stageRef}
-      className={`dynamic-pet-stage tool-${activeTool} mood-${mood}`}
+      className={`dynamic-pet-stage tool-${activeTool} mood-${mood} form-${form}`}
       style={{ width: size, height, '--pet-accent': accentColor, cursor }}
       role="button"
       tabIndex={0}
@@ -148,7 +148,7 @@ export const LiveAnimeModel = ({
 
       <div
         className={`pet-pose-layer ${isPetting ? 'is-petting' : ''} ${mood === 'happy' ? 'is-happy' : ''} ${mood === 'hammered' ? 'is-hit' : ''} ${isSpeaking ? 'is-speaking' : ''}`}
-        style={{ transform: `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg)` }}
+        style={form === 'chibi' ? { transform: `translate3d(${look.x}px, ${look.y}px, 0) rotate(${look.rotate}deg)` } : undefined}
       >
         {rig ? (
           <LayeredPetRig rig={rig} isSpeaking={isSpeaking} look={{ x: look.x, y: look.y }} mood={mood} className="pet-portrait-image" fallbackSrc={imageSrc} />

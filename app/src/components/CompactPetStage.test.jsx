@@ -67,6 +67,19 @@ describe('桌面小窗（bomcat 极简风）', () => {
     expect(JSON.parse(localStorage.getItem('pet_compact_scale_v1'))).toBe(0.5);
   });
 
+  it('真实浏览器序列：菜单内 pointerdown 不关闭菜单，click 生效', () => {
+    const onSelectTool = vi.fn();
+    const stage = render({ onSelectTool });
+    act(() => {
+      stage.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 60 }));
+    });
+    const item = Array.from(container.querySelectorAll('.pet-ctx-item')).find((node) => node.textContent.includes('小锤子'));
+    act(() => { item.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, cancelable: true })); });
+    expect(container.querySelector('.pet-ctx-menu')).not.toBeNull();
+    act(() => { item.dispatchEvent(new window.MouseEvent('click', { bubbles: true })); });
+    expect(onSelectTool).toHaveBeenCalledWith('hammer');
+  });
+
   it('召唤按钮与菜单项都能打开主工作区', () => {
     const onOpenWorkspace = vi.fn();
     render({ onOpenWorkspace });

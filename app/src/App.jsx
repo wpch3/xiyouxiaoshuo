@@ -368,7 +368,8 @@ export default function App() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        overflow: 'hidden',
         backgroundColor: '#0a0d14',
         backgroundImage: `radial-gradient(circle at 50% 10%, ${char.glowColor}, transparent 45%), radial-gradient(circle at 90% 80%, rgba(15, 23, 42, 0.8), transparent 50%)`,
         color: '#f8fafc',
@@ -593,7 +594,7 @@ export default function App() {
       </header>
 
       {/* 主体布局 */}
-      <main style={{ flex: 1, padding: windowMode === 'full' ? '24px' : '16px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
+      <main style={{ flex: 1, minHeight: 0, overflow: 'hidden', padding: windowMode === 'full' ? '18px 24px' : '16px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
         {/* 精简模式下切换为真正的 Bongo 实时键鼠工作台 */}
         {windowMode === 'compact' ? (
           <CompactPetStage
@@ -630,7 +631,7 @@ export default function App() {
           />
         ) : (
           /* 完整仪表盘模式 */
-          <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px', height: '100%', minHeight: 0 }}>
             {/* 左侧：拟人角色舞台与互动专区 */}
             <div
               className="pet-main-card"
@@ -972,7 +973,7 @@ export default function App() {
             </div>
 
             {/* 右侧：多功能控制台 (投喂、仪表盘、消费流水、模型定价对比) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
               {/* 四大关键数据指标卡片 */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
                 {/* 1. 当前 Token 余额 */}
@@ -1120,7 +1121,8 @@ export default function App() {
                 })}
               </div>
 
-              {/* Tab 页面内容 */}
+              {/* Tab 页面内容（页内独立滚动区：应用式分页，不整页滚动） */}
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
               {activeTab === 'pet' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div
@@ -1564,6 +1566,7 @@ export default function App() {
               {activeTab === 'agent' && <AgentPanel provider={currentId} character={char} characters={AI_CHARACTERS} documents={documents} onUsage={recordApiUsage} />}
               {activeTab === 'social' && <SocialPanel characters={AI_CHARACTERS} onUsage={recordApiUsage} />}
               {activeTab === 'links' && <LinksPanel />}
+              </div>
             </div>
           </div>
         )}

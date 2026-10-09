@@ -177,8 +177,8 @@
   -webkit-user-drag: none;
 }
 
-.pet-pose-layer.is-happy .pet-portrait-image { animation: petPortraitBounce .72s ease-in-out 2; }
-.pet-pose-layer.is-hit .pet-portrait-image { animation: petPortraitImpact .46s cubic-bezier(.3,.7,.4,1) 1; }
+.form-chibi .pet-pose-layer.is-happy .pet-portrait-image { animation: petPortraitBounce .72s ease-in-out 2; }
+.form-chibi .pet-pose-layer.is-hit .pet-portrait-image { animation: petPortraitImpact .46s cubic-bezier(.3,.7,.4,1) 1; }
 .pet-pose-layer.is-speaking .pet-portrait-image { animation: petPortraitSpeak .32s ease-in-out infinite alternate; }
 .pet-pose-layer.is-petting .pet-portrait-image { filter: drop-shadow(0 17px 22px rgba(244,132,180,.34)); }
 
@@ -566,3 +566,8 @@
 .pet-ctx-icon { display: grid; place-items: center; width: 17px; height: 17px; }
 .pet-ctx-sep { height: 1px; margin: 5px 8px; background: rgba(255,255,255,.10); }
 .compact-stage.is-contained { position: absolute; border-radius: 14px; }
+
+/* 小窗（桌面宠物）：隐藏网页式提示条；配合 pywebview 透明窗 */
+.compact-stage .pet-tool-hint { display: none; }
+body.pet-compact-body { overflow: hidden; background: transparent !important; }
+body.pet-compact-body .compact-stage { background: transparent !important; }

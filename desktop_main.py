@@ -74,7 +74,7 @@ class DesktopPetAPI:
             resizable=True,
             frameless=True,
             on_top=True,
-            transparent=False,
+            transparent=True,
             easy_drag=True,
             js_api=self,
         )
