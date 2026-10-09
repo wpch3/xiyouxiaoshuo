@@ -45,6 +45,15 @@ def _endpoint(base_url: str, suffix: str) -> str:
     return f"{base}{suffix}"
 
 
+def _voice_endpoint(base_url: str, suffix: str) -> str:
+    """Use OhMyGPT's versioned audio routes when its bare API host is supplied."""
+    base = (base_url or "").strip().rstrip("/")
+    parsed = urllib.parse.urlsplit(base)
+    if (parsed.hostname or "").lower() == "apic.ohmygpt.com" and parsed.path in ("", "/"):
+        base = f"{parsed.scheme}://{parsed.netloc}/v1"
+    return _endpoint(base, suffix)
+
+
 def _messages_for_api(messages: list[dict[str, str]], system_prompt: str) -> list[dict[str, str]]:
     result = []
     for item in messages:
@@ -208,13 +217,26 @@ def synthesize_speech(*, api_key: str, base_url: str, text: str, model: str = "t
         raise RuntimeError("API 语音需要先配置 OpenAI 语音服务 Key")
     if not text.strip():
         raise RuntimeError("没有可播报的文字")
-    url = _endpoint(base_url, "/audio/speech")
-    payload = {"model": model, "voice": voice, "input": text[:4000], "response_format": "mp3"}
-    data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    url = _voice_endpoint(base_url, "/audio/speech")
+    input_text = text[:4096]
+    is_ohmygpt = (urllib.parse.urlsplit(base_url).hostname or "").lower() == "apic.ohmygpt.com"
+    payload = {"model": model, "voice": voice, "input": input_text, "response_format": "mp3"}
+    if is_ohmygpt:
+        # OhMyGPT documents x-www-form-urlencoded for TTS (not OpenAI's JSON body).
+        payload["speed"] = "1"
+        data = urllib.parse.urlencode(payload).encode("utf-8")
+        content_type = "application/x-www-form-urlencoded"
+    else:
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        content_type = "application/json"
     request = urllib.request.Request(
         url,
         data=data,
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+        headers={
+            "Content-Type": content_type,
+            "Accept": "audio/mpeg, audio/*;q=0.9, */*;q=0.8",
+            "Authorization": f"Bearer {api_key}",
+        },
         method="POST",
     )
     try:
@@ -269,7 +291,7 @@ def transcribe_audio(
         f"--{boundary}--\r\n".encode(),
     ])
     request = urllib.request.Request(
-        _endpoint(base_url, "/audio/transcriptions"),
+        _voice_endpoint(base_url, "/audio/transcriptions"),
         data=b"".join(body_parts),
         headers={
             "Content-Type": f"multipart/form-data; boundary={boundary}",

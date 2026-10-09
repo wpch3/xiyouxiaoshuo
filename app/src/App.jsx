@@ -1708,7 +1708,7 @@ export default function App() {
                     </div>
                     <label style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
                       语音 API Base URL
-                      <input value={voiceConfig.baseUrl} onChange={(e) => updateVoiceConfig({ baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px 9px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem' }} />
+                      <input value={voiceConfig.baseUrl} onChange={(e) => updateVoiceConfig({ baseUrl: e.target.value })} placeholder="https://api.openai.com/v1 或 https://apic.ohmygpt.com" style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px 9px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem' }} />
                     </label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '7px', marginTop: '8px' }}>
                       <label style={{ color: '#94a3b8', fontSize: '0.68rem' }}>TTS 模型<input value={voiceConfig.speechModel} onChange={(e) => updateVoiceConfig({ speechModel: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} /></label>
@@ -1725,7 +1725,7 @@ export default function App() {
                       style={{ width: '100%', marginTop: '8px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem' }}
                     />
                     <div style={{ fontSize: '0.68rem', lineHeight: 1.5, color: '#64748b', marginTop: '6px' }}>
-                      配置 Key 后使用 API 语音识别与 TTS；没有 Key 时退回设备内置语音能力。角色语调设定：<span style={{ color: char.accentColor }}>{char.voiceStyle}</span>
+                      TTS 支持 OpenAI 与 OhMyGPT 接口格式；API 转写还需服务商提供 audio/transcriptions。没有语音 Key 时退回浏览器语音能力。角色语调设定：<span style={{ color: char.accentColor }}>{char.voiceStyle}</span>
                     </div>
                   </div>
 
