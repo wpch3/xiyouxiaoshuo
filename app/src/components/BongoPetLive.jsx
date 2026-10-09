@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Move, X } from 'lucide-react';
+<<<<<<< HEAD
 import { BongoRealDesk } from './BongoRealDesk';
+=======
+import { CompactPetStage } from './CompactPetStage';
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 import { LiveAnimeModel } from './LiveAnimeModel';
 
 export const FloatingDeskPetOverlay = ({
@@ -63,6 +67,25 @@ export const FloatingDeskPetOverlay = ({
       <div className="floating-pet-titlebar">
         <span><Move size={13} /> {characterId} 桌面伴侣</span>
         <button type="button" onClick={onClose} title="收起桌面伴侣" aria-label="收起桌面伴侣"><X size={15} /></button>
+<<<<<<< HEAD
+=======
+      </div>
+      <div style={{ position: 'relative', height: 470 }}>
+        <CompactPetStage
+          contained
+          characterId={characterId}
+          mood={mood}
+          speechText={speechText}
+          balanceLabel={String(tokensToday || 0)}
+          activeTool={activeTool}
+          accentColor={accentColor}
+          onPet={onPet}
+          onHammer={onHammer}
+          onSelectTool={onSelectTool}
+          onOpenWorkspace={onClose}
+          onClose={onClose}
+        />
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
       </div>
       <BongoRealDesk
         characterId={characterId}

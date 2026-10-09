@@ -382,6 +382,7 @@
   .pet-stage-caption { font-size: .58rem; bottom: 7px; }
 }
 
+<<<<<<< HEAD
 .compact-pet-workspace {
   width: 100%;
   display: flex;
@@ -424,6 +425,8 @@
 }
 
 .compact-pet-footer button,
+=======
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 .floating-pet-titlebar button {
   display: grid;
   place-items: center;
@@ -452,7 +455,11 @@
 }
 
 .floating-pet-titlebar > span { display: inline-flex; align-items: center; gap: 7px; }
+<<<<<<< HEAD
 .floating-pet-titlebar button:hover, .compact-pet-footer button:hover { background: rgba(255,255,255,.15); }
+=======
+.floating-pet-titlebar button:hover { background: rgba(255,255,255,.15); }
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 
 .avatar-state-badge {
   position: absolute;
@@ -561,3 +568,53 @@
   0%, 91%, 96.5%, 100% { opacity: 0; }
   92.5%, 95% { opacity: 1; }
 }
+<<<<<<< HEAD
+=======
+
+/* ── 桌面小窗（bomcat 极简风）：只有角色 + 余额 + 召唤按钮 + 右键菜单 ── */
+.compact-stage {
+  position: fixed; inset: 0; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 108%, rgba(20,26,40,.92), rgba(9,12,18,.96));
+  display: flex; align-items: center; justify-content: center;
+  user-select: none;
+}
+.compact-stage-pet { display: grid; place-items: center; }
+.compact-stage-token {
+  position: absolute; top: 10px; right: 12px; z-index: 5;
+  font-size: .68rem; color: #cbd5e1; letter-spacing: .02em;
+  background: rgba(10,14,22,.55); border: 1px solid rgba(255,255,255,.10);
+  padding: 3px 9px; border-radius: 999px; backdrop-filter: blur(6px);
+}
+.compact-stage-summon {
+  position: absolute; right: 12px; bottom: 12px; z-index: 5;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer;
+  color: #e2e8f0; background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(6px);
+  transition: transform .15s ease, background .15s ease;
+}
+.compact-stage-summon:hover { transform: scale(1.08); background: rgba(255,255,255,.16); }
+.compact-stage-speech {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  max-width: min(78vw, 340px); z-index: 5;
+  background: rgba(12,16,26,.78); border: 1px solid rgba(255,255,255,.12);
+  color: #f1f5f9; font-size: .74rem; line-height: 1.45;
+  padding: 7px 12px; border-radius: 12px; backdrop-filter: blur(6px);
+}
+.pet-ctx-menu {
+  position: fixed; z-index: 40; width: 196px;
+  background: rgba(15,19,29,.96); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px; padding: 6px; box-shadow: 0 18px 40px rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+}
+.pet-ctx-item {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 7px 9px; border: 0; border-radius: 8px; cursor: pointer;
+  background: transparent; color: #e2e8f0; font-size: .76rem; text-align: left;
+}
+.pet-ctx-item:hover { background: rgba(255,255,255,.09); }
+.pet-ctx-item.is-active { background: color-mix(in srgb, var(--pet-accent, #79A8F4) 26%, transparent); }
+.pet-ctx-icon { display: grid; place-items: center; width: 17px; height: 17px; }
+.pet-ctx-sep { height: 1px; margin: 5px 8px; background: rgba(255,255,255,.10); }
+.compact-stage.is-contained { position: absolute; border-radius: 14px; }
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)

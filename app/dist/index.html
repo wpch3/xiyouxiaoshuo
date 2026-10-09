@@ -2,13 +2,40 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='26' fill='%2360A5FA'/><circle cx='32' cy='32' r='15' fill='%23EFF6FF'/><circle cx='32' cy='32' r='7' fill='%231D4ED8'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Token Pet - 拟人桌面Token消费伴侣</title>
+<<<<<<< HEAD
     <script type="module" crossorigin src="/assets/index-B0d4A0Av.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-Ci8u8Tge.css">
+=======
+    <script type="module" crossorigin src="/assets/index-DUvgIEaN.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D6KJuzqV.css">
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // 启动看门狗：脚本加载失败/模块 404 时给出可见提示，杜绝静默黑屏。
+      window.__PET_BOOTED__ = false;
+      window.addEventListener('error', function (event) {
+        if (window.__PET_BOOTED__) return;
+        window.__PET_BOOT_ERROR__ = String((event.message || '') + ' ' + ((event.target && (event.target.src || event.target.href)) || ''));
+      }, true);
+      setTimeout(function () {
+        var root = document.getElementById('root');
+        if (window.__PET_BOOTED__ || (root && root.childElementCount > 0)) return;
+        var box = document.createElement('div');
+        box.setAttribute('style', 'position:fixed;inset:0;display:grid;place-items:center;background:#0b0f16;color:#e2e8f0;font:14px/1.7 system-ui,sans-serif;padding:24px;z-index:9999');
+        box.innerHTML = '<div style="max-width:520px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:22px">'
+          + '<div style="font-weight:800;font-size:16px;margin-bottom:8px">界面资源加载失败（不是黑屏 bug）</div>'
+          + '<div style="color:#94a3b8;font-size:12.5px">浏览器/桌面窗未能加载界面脚本，多为缓存或旧构建残留。请强制刷新（Ctrl+Shift+R）；桌面版请在仓库 app 目录重新执行 npm ci 与 npm run build 后重启。</div>'
+          + '<div style="margin-top:8px;color:#64748b;font-size:11px" id="pet-boot-err"></div>'
+          + '<button type="button" onclick="location.reload()" style="margin-top:12px;padding:8px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;cursor:pointer">重试加载</button></div>';
+        document.body.appendChild(box);
+        var detail = document.getElementById('pet-boot-err');
+        if (detail && window.__PET_BOOT_ERROR__) detail.textContent = '捕获：' + window.__PET_BOOT_ERROR__.slice(0, 300);
+      }, 5000);
+    </script>
   </body>
 </html>

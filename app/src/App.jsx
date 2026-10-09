@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AI_CHARACTERS, FOOD_ITEMS } from './constants/characters';
+<<<<<<< HEAD
 import { TOOL_ART } from './constants/toolArt';
 import { LiveAnimeModel } from './components/LiveAnimeModel';
 import { BongoRealDesk } from './components/BongoRealDesk';
+=======
+import { getToolButtonArt } from './constants/toolArt';
+import { CompactPetStage } from './components/CompactPetStage';
+import { LiveAnimeModel } from './components/LiveAnimeModel';
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
 import { FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
 import { VoiceChatControls } from './components/VoiceChatControls';
@@ -591,6 +597,7 @@ export default function App() {
       <main style={{ flex: 1, padding: windowMode === 'full' ? '24px' : '16px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
         {/* 精简模式下切换为真正的 Bongo 实时键鼠工作台 */}
         {windowMode === 'compact' ? (
+<<<<<<< HEAD
           <div
             style={{
               display: 'flex',
@@ -687,6 +694,40 @@ export default function App() {
               <Zap size={14} color={char.color} /> 发送快捷任务
             </button>
           </div>
+=======
+          <CompactPetStage
+            characterId={currentId}
+            form={characterForm}
+            mood={mood}
+            speechText={speechText}
+            balanceLabel={fmtTokens(acc.balanceTokens)}
+            activeTool={activeTool}
+            accentColor={char.accentColor}
+            onPet={handlePetAvatar}
+            onHammer={handleHammerAvatar}
+            onSelectTool={setActiveTool}
+            onOpenWorkspace={() => {
+              if (window.pywebview?.api?.open_main_window) window.pywebview.api.open_main_window();
+              else setWindowMode('full');
+            }}
+            onChooseWorkspace={
+              window.pywebview?.api?.choose_workspace
+                ? async () => {
+                  try {
+                    const picked = await window.pywebview.api.choose_workspace();
+                    if (picked) setSpeechText(`已选择工作目录：${picked}`);
+                  } catch (err) {
+                    setSpeechText(String((err && err.message) || err));
+                  }
+                }
+                : null
+            }
+            onClose={() => {
+              if (window.pywebview?.api?.close_floating_pet) window.pywebview.api.close_floating_pet();
+              else setWindowMode('full');
+            }}
+          />
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
         ) : (
           /* 完整仪表盘模式 */
           <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
@@ -833,8 +874,13 @@ export default function App() {
               <div className="pet-tool-dock" style={{ zIndex: 3, '--pet-accent': char.color }} aria-label="桌宠互动工具">
                 {[
                   { id: 'pointer', label: '观察', icon: <MousePointer2 size={23} strokeWidth={1.8} /> },
+<<<<<<< HEAD
                   { id: 'pet', label: '手抚摸', image: TOOL_ART.pet },
                   { id: 'hammer', label: '小锤子', image: TOOL_ART.hammer },
+=======
+                  { id: 'pet', label: '手抚摸', art: getToolButtonArt(currentId, 'pet') },
+                  { id: 'hammer', label: '小锤子', art: getToolButtonArt(currentId, 'hammer') },
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
                 ].map((tool) => (
                   <button
                     key={tool.id}
@@ -843,7 +889,11 @@ export default function App() {
                     aria-pressed={activeTool === tool.id}
                     onClick={() => setActiveTool(tool.id)}
                   >
+<<<<<<< HEAD
                     {tool.image ? <img src={tool.image} alt="" /> : tool.icon}
+=======
+                    {tool.art ? <img src={tool.art.src} style={{ filter: tool.art.filter }} alt="" /> : tool.icon}
+>>>>>>> be0a619 (小窗 bomcat 化（右键菜单+滚轮缩放500%+余额/召唤极简UI）、工具插画精致化与七角色配色适配、黑屏三重防线、清理 BongoRealDesk 残留)
                     <span>{tool.label}</span>
                   </button>
                 ))}
