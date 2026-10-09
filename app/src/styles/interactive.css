@@ -179,6 +179,7 @@
 
 .form-chibi .pet-pose-layer.is-happy .pet-portrait-image { animation: petPortraitBounce .72s ease-in-out 2; }
 .form-chibi .pet-pose-layer.is-hit .pet-portrait-image { animation: petPortraitImpact .46s cubic-bezier(.3,.7,.4,1) 1; }
+.pet-rig-talk { transition: opacity .06s linear; }
 .pet-pose-layer.is-speaking .pet-portrait-image { animation: petPortraitSpeak .32s ease-in-out infinite alternate; }
 .pet-pose-layer.is-petting .pet-portrait-image { filter: drop-shadow(0 17px 22px rgba(244,132,180,.34)); }
 

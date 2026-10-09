@@ -24,3 +24,15 @@
 - 骨骼区批次②：颈补图、衣物分离、腿/鞋、手臂三段+手指。
 - Qt 宠物窗：睡眠/久坐提醒状态、拖拽抓取姿态变体（批次③资产就位后接入）。
 - 其余 6 角色 ×4 形态批量管线（批次④），Q 版沿用鲸鱼连体衣格式换物种。
+
+## 源码级学习结论（第二轮，浅克隆研读后已删除暂存）
+
+| 仓库 | 源码位置 | 吸收进本项目的机制 |
+| --- | --- | --- |
+| QCYTSN/ds-local-pet | `animation/state_machine.py`、`awareness/idle_detector.py` | 优先级+可中断+过期的动作状态机（idle/sleep/tap/pat）；Win32 `GetLastInputInfo` 系统空闲检测 → 90s 无输入进睡眠（闭眼+慢摆动+呼吸），任何输入唤醒。已落地 `desktop_pet_qt.py` |
+| LorisYounger/VPet | `VPet-Simulator.Core/Display/Main.xaml.cs` TouchHead/TouchBody/TouchArea Locate+Size | 触摸分区语汇：头部区（rig 顶 30%）=摸头（眯眼+小跳+连打节流），身体区=拖动/轻拍。已落地 Qt 窗 |
+| vladelaina/BongoCat | `src/platform/windows_layered.c`、`linux.c`、`macos.m` | 分层透明窗 + click-through（指针穿透）开关语汇；托盘提供"鼠标穿透：开/关"（`Qt.WindowTransparentForInput`）。已落地 Qt 窗托盘菜单 |
+| ayangweb/bongocat | `crates/bongocat-input`、`bongocat-overlay`、`bongocat-live2d-playback` | 输入→模型→播放→渲染的分层 crate 架构，验证本项 hook→状态机→rig 管线；动作可重叠（tap 与 pat 并存）由状态机优先级表达 |
+| moeru-ai/airi | `packages/core-agent/src/voice/{controller,interruption,turn}.ts`、`input/end-detection` | 实时语音=输入(STT+端点检测)→turn→输出音频+interruption(barge-in) 控制器结构；后续实时语音按此四段实现，供应商走 provider 抽象（gemini-audio/minimax/openrouter 等） |
+
+本轮同步优化：Web 口型改"词节奏调度器"（词内随机音素 70-160ms、12% 重音长帧、词间 70% 概率闭口停顿 120-260ms、帧间 60ms 交叉淡化），视线改 rAF 缓动（0.16 系数，直接写 transform 不触发重渲染）。
