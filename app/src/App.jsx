@@ -49,6 +49,10 @@ const ACCOUNT_STORAGE_KEY = 'pet_account_state_v1';
 const CHAT_STORAGE_KEY = 'pet_chat_history_v1';
 const CALL_LOG_STORAGE_KEY = 'pet_call_log_v1';
 
+const EMOJI_RANGES = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}]/gu;
+// 展示层净化：模型回复或任何文本中的 Emoji 一律不渲染（项目硬约束：界面不出现 Emoji）
+const stripEmoji = (text = '') => String(text).replace(EMOJI_RANGES, '').replace(/\s{3,}/g, ' ');
+
 const localDateKey = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -769,7 +773,7 @@ export default function App() {
                   backdropFilter: 'blur(8px)'
                 }}
               >
-                <span>{speechText}</span>
+                <span>{stripEmoji(speechText)}</span>
               </div>
 
               {/* 核心立绘角色 (实装眼睛瞳孔物理视线跟随、眨眼、张嘴说话、举手欢呼与被打哭流泪) */}
@@ -851,7 +855,7 @@ export default function App() {
                         whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'
                       }}
                     >
-                      {message.content || (message.pending ? '正在等待 API 响应…' : '')}
+                      {stripEmoji(message.content) || (message.pending ? '正在等待 API 响应…' : '')}
                       {message.usageSource && (
                         <div style={{ marginTop: '4px', color: '#64748b', fontSize: '0.63rem' }}>
                           {message.model || char.modelFamily} · {fmtNum(message.tokens || 0)} tokens · {message.usageSource === 'api' ? 'API 返回用量' : '本地估算'}

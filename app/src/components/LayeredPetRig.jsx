@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 // 分层立绘渲染器：同尺寸透明 PNG 按 z 序叠放，部件级动画
 // （刘海/双侧发摆动、眼睑眨眼、嘴部口型、虹膜视线、眉毛情绪），
 // 对应拆件清单 PET_RIGS。
-export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, mood = 'idle', className = '' }) => {
+export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, mood = 'idle', className = '', fallbackSrc = '' }) => {
   const [isBlinking, setIsBlinking] = useState(false);
+  const [isBroken, setIsBroken] = useState(false);
   const [mouthOpen, setMouthOpen] = useState(false);
 
   useEffect(() => {
@@ -39,6 +41,10 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
   const gazeY = clamp((look.y || 0) * 0.35, -2.2, 2.2);
   const browShift = mood === 'happy' ? -2.5 : mood === 'hammered' ? 1.5 : 0;
 
+  if (isBroken && fallbackSrc) {
+    return <img className={className} src={fallbackSrc} alt="桌宠立绘" draggable="false" />;
+  }
+
   return (
     <div className={`pet-rig ${className}`} data-rig-layers={rig.layers.length}>
       {rig.layers.map((layer) => {
@@ -59,6 +65,7 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
             src={layer.src}
             alt=""
             draggable="false"
+            onError={() => setIsBroken(true)}
             style={{ zIndex: layer.z, opacity: visible ? 1 : 0, transform }}
           />
         );

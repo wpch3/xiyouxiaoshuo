@@ -144,6 +144,18 @@ describe('分层立绘 rig（拆件）', () => {
     expect(iris.style.transform).toBe('translate(0px, 0px)');
   });
 
+  it('拆件层加载失败时自动回退单张立绘（素材 404 韧性）', () => {
+    const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
+    const baseLayer = stage.querySelector('.pet-rig-layer.pet-rig-base');
+    act(() => {
+      baseLayer.dispatchEvent(new window.Event('error', { bubbles: false }));
+    });
+    expect(container.querySelector('.pet-rig')).toBeNull();
+    const img = container.querySelector('img.pet-portrait-image');
+    expect(img).not.toBeNull();
+    expect(img.getAttribute('src')).toBe('/characters/deepseek_live.png');
+  });
+
   it('其他角色/形态仍回退到单张立绘', () => {
     const stage = render({ characterId: 'claude', form: 'normal', activeTool: 'pointer' });
     expect(stage.querySelector('.pet-rig')).toBeNull();
