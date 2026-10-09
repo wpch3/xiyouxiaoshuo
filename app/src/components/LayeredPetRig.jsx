@@ -19,8 +19,8 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
     return () => window.clearInterval(timer);
   }, [isSpeaking]);
 
-  const gazeX = clamp((look.x || 0) * 0.85, -6, 6);
-  const gazeY = clamp((look.y || 0) * 0.6, -4, 4);
+  const gazeX = clamp((look.x || 0) * 0.7, -5, 5);
+  const gazeY = clamp((look.y || 0) * 0.35, -2.5, 2.5);
   const browShift = mood === 'happy' ? -2.5 : mood === 'hammered' ? 1.5 : 0;
 
   if (isBroken && fallbackSrc) {

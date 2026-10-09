@@ -577,4 +577,4 @@ body.pet-compact-body .compact-stage { background: transparent !important; }
 .compact-stage .pet-stage-backdrop { display: none; }
 .compact-stage .dynamic-pet-stage { background: transparent; box-shadow: none; border-radius: 0; }
 /* 原生透明窗：品红为 Win32 LWA_COLORKEY 键色 */
-body.pet-native-window, body.pet-native-window .compact-stage { background: #FF00FF !important; }
+body.pet-native-window, body.pet-native-window .compact-stage { background: transparent !important; }

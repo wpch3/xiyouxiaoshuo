@@ -147,7 +147,7 @@ describe('分层立绘 rig（拆件）', () => {
     });
     const iris = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/iris.png"]');
     const brows = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/brows.png"]');
-    expect(iris.style.transform).toContain('translate(5.95px, 2.4px)');
+    expect(iris.style.transform).toContain('translate(4.9px, 1.4px)');
     expect(getPetRig('deepseek', 'normal').clip).toContain('ellipse(');
     expect(brows.style.transform).toBe('translateY(-2.5px)');
     act(() => {

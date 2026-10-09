@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import tempfile
-import threading
 from pathlib import Path
 
 # WebView2 在某些显卡驱动上会整窗黑屏；禁用 GPU 合成可回退到软件渲染。
@@ -79,6 +78,14 @@ class DesktopPetAPI:
             easy_drag=True,
             js_api=self,
         )
+
+    def resize_pet_window(self, width, height):
+        """小窗随角色缩放整体贴合（无黑边）。"""
+        if self._pet_window is not None:
+            try:
+                self._pet_window.resize(int(width), int(height))
+            except Exception:
+                pass
 
     def close_floating_pet(self):
         if self._pet_window is not None:
@@ -196,31 +203,6 @@ ERROR_HTML = """
 """
 
 
-def _apply_color_key_transparency(title_prefix: str) -> None:
-    """Win32 色彩键：把窗内品红像素变真透明，得到无边框异形桌面宠物窗。"""
-    if not sys.platform.startswith("win"):
-        return
-    import ctypes
-    import time
-
-    user32 = ctypes.windll.user32
-    WS_EX_LAYERED = 0x00080000
-    LWA_COLORKEY = 0x00000001
-    GWL_EXSTYLE = -20
-    MAGENTA = 0x00FF00FF  # COLORREF: B=255,G=0,R=255
-
-    for _ in range(30):
-        time.sleep(0.5)
-        hwnd = user32.FindWindowW(None, title_prefix)
-        if hwnd:
-            break
-    if not hwnd:
-        return
-    ex = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-    user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex | WS_EX_LAYERED)
-    user32.SetLayeredWindowAttributes(hwnd, MAGENTA, 0, LWA_COLORKEY)
-
-
 def main():
     dist_dir = get_dist_dir()
     if not os.path.exists(os.path.join(dist_dir, "index.html")):
@@ -250,11 +232,6 @@ def main():
         # PyWebView defaults to private mode, which discards localStorage and
         # IndexedDB at exit. Persist the per-user profile explicitly.
         webview.start(
-            lambda: threading.Thread(
-                target=_apply_color_key_transparency,
-                args=("AI Token Pet · 独立桌宠",),
-                daemon=True,
-            ).start(),
             debug=False,
             private_mode=False,
             storage_path=str(webview_storage_path),

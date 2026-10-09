@@ -749,6 +749,34 @@ export default function App() {
                 <span>角色大小</span>
               </div>
 
+              {/* 形态快速切换（常驻可见，不再被聊天区挤出） */}
+              <div style={{ display: 'flex', gap: '4px', zIndex: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {[
+                  { id: 'normal', label: '少女' },
+                  { id: 'loli', label: '萝莉' },
+                  { id: 'mature', label: '青年女性' },
+                  { id: 'chibi', label: 'Q版' }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => {
+                      soundManager.playSwitch();
+                      setCharacterForm(f.id);
+                    }}
+                    style={{
+                      fontSize: '0.66rem',
+                      padding: '3px 9px',
+                      borderRadius: '999px',
+                      border: `1px solid ${characterForm === f.id ? char.color : 'rgba(255,255,255,0.14)'}`,
+                      backgroundColor: characterForm === f.id ? `${char.color}33` : 'rgba(255,255,255,0.05)',
+                      color: '#e2e8f0',
+                      cursor: 'pointer'
+                    }}
+                  >{f.label}</button>
+                ))}
+              </div>
+
               {/* 核心立绘角色 (分层拆件 rig：视线/眨眼/口型/眉/发丝摆动) */}
               <div
                 style={{
