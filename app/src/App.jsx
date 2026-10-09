@@ -149,7 +149,6 @@ export default function App() {
     .map((document) => `【本机资料：${document.name}】\n${document.textContent}`)
     .join('\n\n')
     .slice(0, 50_000);
-  const latestAssistantText = [...currentChatMessages].reverse().find((message) => message.role === 'assistant' && !message.pending && !message.failed)?.content || '';
 
   useEffect(() => {
     setApiConfigState(aiService.getApiConfig(currentId));
@@ -1000,7 +999,6 @@ export default function App() {
                 </form>
                 <div style={{ marginTop: '7px' }}>
                   <VoiceChatControls
-                    text={latestAssistantText}
                     onTranscript={(transcript) => setUserChatInput((previous) => previous ? `${previous} ${transcript}` : transcript)}
                     accentColor={char.accentColor}
                   />
@@ -1704,28 +1702,27 @@ export default function App() {
                   {/* API 语音输入、语音聊天和播报设置 */}
                   <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '8px' }}>
-                      🎙 语音聊天 API
+                      🎙 语音输入配置
                     </div>
                     <label style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
-                      语音 API Base URL
+                      语音转写 API Base URL
                       <input value={voiceConfig.baseUrl} onChange={(e) => updateVoiceConfig({ baseUrl: e.target.value })} placeholder="https://api.openai.com/v1 或 https://apic.ohmygpt.com" style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px 9px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem' }} />
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '7px', marginTop: '8px' }}>
-                      <label style={{ color: '#94a3b8', fontSize: '0.68rem' }}>TTS 模型<input value={voiceConfig.speechModel} onChange={(e) => updateVoiceConfig({ speechModel: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} /></label>
-                      <label style={{ color: '#94a3b8', fontSize: '0.68rem' }}>语音<input value={voiceConfig.voice} onChange={(e) => updateVoiceConfig({ voice: e.target.value })} placeholder="alloy" style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} /></label>
-                      <label style={{ color: '#94a3b8', fontSize: '0.68rem' }}>转写模型<input value={voiceConfig.transcriptionModel} onChange={(e) => updateVoiceConfig({ transcriptionModel: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} /></label>
-                    </div>
+                    <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.68rem', marginTop: '8px' }}>
+                      语音转写模型
+                      <input value={voiceConfig.transcriptionModel} onChange={(e) => updateVoiceConfig({ transcriptionModel: e.target.value })} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '7px', borderRadius: '8px', background: '#111827', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+                    </label>
                     <input
                       key="voice-api-key"
                       type="password"
                       autoComplete="new-password"
                       defaultValue={aiService.getVoiceApiKey()}
                       onChange={(e) => aiService.setVoiceApiKey(e.target.value)}
-                      placeholder="语音 API Key（配置后可用 API 录音转写与语音合成）"
+                      placeholder="语音转写 API Key（不会用于语音回复）"
                       style={{ width: '100%', marginTop: '8px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: '0.75rem' }}
                     />
                     <div style={{ fontSize: '0.68rem', lineHeight: 1.5, color: '#64748b', marginTop: '6px' }}>
-                      TTS 支持 OpenAI 与 OhMyGPT 接口格式；API 转写还需服务商提供 audio/transcriptions。没有语音 Key 时退回浏览器语音能力。角色语调设定：<span style={{ color: char.accentColor }}>{char.voiceStyle}</span>
+                      当前仅提供单次语音转文字输入，不包含文字转语音或实时通话。浏览器语音识别可作为备用；完整语音模式会接入支持双向实时音频的服务。
                     </div>
                   </div>
 

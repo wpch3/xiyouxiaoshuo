@@ -212,51 +212,6 @@ def chat_completion(
     }
 
 
-def synthesize_speech(*, api_key: str, base_url: str, text: str, model: str = "tts-1", voice: str = "alloy") -> bytes:
-    if not api_key:
-        raise RuntimeError("API 语音需要先配置 OpenAI 语音服务 Key")
-    if not text.strip():
-        raise RuntimeError("没有可播报的文字")
-    url = _voice_endpoint(base_url, "/audio/speech")
-    input_text = text[:4096]
-    is_ohmygpt = (urllib.parse.urlsplit(base_url).hostname or "").lower() == "apic.ohmygpt.com"
-    payload = {"model": model, "voice": voice, "input": input_text, "response_format": "mp3"}
-    if is_ohmygpt:
-        # OhMyGPT documents x-www-form-urlencoded for TTS (not OpenAI's JSON body).
-        payload["speed"] = "1"
-        data = urllib.parse.urlencode(payload).encode("utf-8")
-        content_type = "application/x-www-form-urlencoded"
-    else:
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        content_type = "application/json"
-    request = urllib.request.Request(
-        url,
-        data=data,
-        headers={
-            "Content-Type": content_type,
-            "Accept": "audio/mpeg, audio/*;q=0.9, */*;q=0.8",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=120) as response:
-            audio = response.read()
-    except urllib.error.HTTPError as exc:
-        details = exc.read().decode("utf-8", errors="replace")
-        try:
-            parsed = json.loads(details)
-            details = (parsed.get("error") or {}).get("message") or details
-        except (ValueError, AttributeError):
-            pass
-        raise RuntimeError(f"语音 API 返回 HTTP {exc.code}: {details[:500]}") from None
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"无法连接语音 API: {exc.reason}") from None
-    if not audio:
-        raise RuntimeError("语音 API 返回空音频")
-    return audio
-
-
 def transcribe_audio(
     *, api_key: str, base_url: str, audio: bytes, filename: str = "voice.webm",
     content_type: str = "audio/webm", model: str = "whisper-1",

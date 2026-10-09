@@ -1,6 +1,6 @@
 const CONFIG_STORAGE_KEY = 'pet_api_configs_v1';
 const VOICE_CONFIG_STORAGE_KEY = 'pet_voice_config_v1';
-const DEFAULT_VOICE_CONFIG = { baseUrl: 'https://api.openai.com/v1', speechModel: 'tts-1', transcriptionModel: 'whisper-1', voice: 'alloy' };
+const DEFAULT_VOICE_CONFIG = { baseUrl: 'https://api.openai.com/v1', transcriptionModel: 'whisper-1' };
 
 export const DEFAULT_PROVIDER_CONFIGS = {
   deepseek: { mode: 'official', protocol: 'openai', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
@@ -86,12 +86,19 @@ class AITokenPetService {
   }
 
   getVoiceConfig() {
-    return { ...DEFAULT_VOICE_CONFIG, ...safeReadJson(VOICE_CONFIG_STORAGE_KEY, {}) };
+    const saved = safeReadJson(VOICE_CONFIG_STORAGE_KEY, {});
+    return {
+      baseUrl: String(saved.baseUrl || DEFAULT_VOICE_CONFIG.baseUrl),
+      transcriptionModel: String(saved.transcriptionModel || DEFAULT_VOICE_CONFIG.transcriptionModel),
+    };
   }
 
   setVoiceConfig(patch) {
     const next = { ...this.getVoiceConfig(), ...patch };
-    safeWriteJson(VOICE_CONFIG_STORAGE_KEY, next);
+    safeWriteJson(VOICE_CONFIG_STORAGE_KEY, {
+      baseUrl: next.baseUrl,
+      transcriptionModel: next.transcriptionModel,
+    });
     return next;
   }
 
@@ -120,26 +127,6 @@ class AITokenPetService {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || `语音识别失败 (${response.status})`);
     return String(result.text || '');
-  }
-
-  async synthesizeSpeech(text) {
-    const config = this.getVoiceConfig();
-    const response = await fetch('/api/voice', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        apiKey: this.getVoiceApiKey(),
-        baseUrl: config.baseUrl,
-        model: config.speechModel,
-        voice: config.voice,
-        text,
-      }),
-    });
-    if (!response.ok) {
-      const result = await response.json().catch(() => ({}));
-      throw new Error(result.error || `语音合成失败 (${response.status})`);
-    }
-    return response.blob();
   }
 
   async sendPrompt({ provider, prompt, messages, systemPrompt, onChunk, onComplete, onError, signal }) {

@@ -17,7 +17,7 @@ from email.parser import BytesParser
 from email.policy import default as email_policy
 from urllib.parse import urlsplit
 
-from ai_gateway import chat_completion, synthesize_speech, transcribe_audio
+from ai_gateway import chat_completion, transcribe_audio
 
 
 def _default_dist_dir() -> Path:
@@ -92,23 +92,6 @@ class _PetRequestHandler(SimpleHTTPRequestHandler):
                     system_prompt=str(body.get("systemPrompt") or ""),
                 )
                 self._json(200, result)
-                return
-
-            if path == "/api/voice":
-                body = json.loads(self._read_request_body(256 * 1024).decode("utf-8"))
-                audio = synthesize_speech(
-                    api_key=str(body.get("apiKey") or ""),
-                    base_url=str(body.get("baseUrl") or ""),
-                    text=str(body.get("text") or ""),
-                    model=str(body.get("model") or "tts-1"),
-                    voice=str(body.get("voice") or "alloy"),
-                )
-                self.send_response(200)
-                self.send_header("Content-Type", "audio/mpeg")
-                self.send_header("Content-Length", str(len(audio)))
-                self.send_header("Cache-Control", "no-store")
-                self.end_headers()
-                self.wfile.write(audio)
                 return
 
             if path == "/api/transcribe":
