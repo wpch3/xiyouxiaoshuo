@@ -112,6 +112,10 @@ export default function App() {
   // 角色拟人状态
   const [mood, setMood] = useState('idle'); // 'idle' | 'happy' | 'crying' | 'thinking' | 'hammered'
   const [characterForm, setCharacterForm] = useState(() => readLocalJson('pet_character_form_v1', 'normal')); // loli | normal(少女) | mature | chibi
+  const [petScale, setPetScale] = useState(() => {
+    const saved = readLocalJson('pet_scale_v1', 1);
+    return typeof saved === 'number' ? Math.min(1.5, Math.max(0.7, saved)) : 1;
+  });
   const [speechText, setSpeechText] = useState('');
   const [activeTool, setActiveTool] = useState('pointer');
   const [isSpeaking, setIsSpeaking] = useState(false);
