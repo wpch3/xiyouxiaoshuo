@@ -43,7 +43,9 @@ import {
   Package,
   ClipboardList,
   PlugZap,
-  Mic
+  Mic,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react';
 
 const ACCOUNT_STORAGE_KEY = 'pet_account_state_v1';
@@ -184,7 +186,7 @@ export default function App() {
     } catch (error) {
       console.warn('本地数据保存失败:', error);
     }
-  }, [accounts, chatHistories, liveCallLog, currentId, characterForm, selectedOutfit, favorability]);
+  }, [accounts, chatHistories, liveCallLog, currentId, characterForm, selectedOutfit, favorability, petScale]);
 
   // 互动动作只更新角色状态，不伪造角色台词；对话气泡只展示 API 回复与连接状态。
   const handlePetAvatar = () => {
@@ -777,7 +779,35 @@ export default function App() {
                 <span>{stripEmoji(speechText)}</span>
               </div>
 
-              {/* 核心立绘角色 (实装眼睛瞳孔物理视线跟随、眨眼、张嘴说话、举手欢呼与被打哭流泪) */}
+              {/* 角色缩放控制：太小看不清/不好点时放大，记忆到本机 */}
+              <div
+                style={{
+                  zIndex: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '6px',
+                  color: '#94a3b8',
+                  fontSize: '0.7rem'
+                }}
+              >
+                <button
+                  type="button"
+                  aria-label="缩小角色"
+                  onClick={() => setPetScale((v) => Math.max(0.7, Number((v - 0.1).toFixed(2))))}
+                  style={{ display: 'grid', placeItems: 'center', width: 26, height: 26, borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', cursor: 'pointer' }}
+                ><ZoomOut size={14} /></button>
+                <span style={{ minWidth: 40, textAlign: 'center' }}>{Math.round(petScale * 100)}%</span>
+                <button
+                  type="button"
+                  aria-label="放大角色"
+                  onClick={() => setPetScale((v) => Math.min(1.5, Number((v + 0.1).toFixed(2))))}
+                  style={{ display: 'grid', placeItems: 'center', width: 26, height: 26, borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', cursor: 'pointer' }}
+                ><ZoomIn size={14} /></button>
+                <span>角色大小</span>
+              </div>
+
+              {/* 核心立绘角色 (分层拆件 rig：视线/眨眼/口型/眉/发丝摆动) */}
               <div
                 style={{
                   zIndex: 2,
@@ -796,7 +826,7 @@ export default function App() {
                   accentColor={char.accentColor}
                   onPet={handlePetAvatar}
                   onHammer={handleHammerAvatar}
-                  size={320}
+                  size={Math.round(320 * petScale)}
                 />
               </div>
 

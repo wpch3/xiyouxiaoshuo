@@ -99,7 +99,8 @@ describe('分层立绘 rig（拆件）', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
     const rig = stage.querySelector('.pet-rig');
     expect(rig).not.toBeNull();
-    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(13);
+    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(17); // 12 单图层 + 5 口型帧
+    expect(rig.querySelectorAll('.pet-rig-talk')).toHaveLength(5);
     expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_rig.png');
     const wave = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_wave.png"]');
     const rest = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_rest.png"]');
@@ -114,11 +115,12 @@ describe('分层立绘 rig（拆件）', () => {
       act(() => {
         root.render(<LayeredPetRig rig={rigDef} isSpeaking />);
       });
-      const mouth = container.querySelector('.pet-rig-mouth_open, .pet-rig-layer[src="/characters/deepseek_layers/mouth_open.png"]');
+      const frames = () => Array.from(container.querySelectorAll('.pet-rig-talk'));
       const lids = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/eyelids.png"]');
-      expect(mouth.style.opacity).toBe('0');
+      expect(frames().filter((f) => f.style.opacity === '1')).toHaveLength(1);
       act(() => { vi.advanceTimersByTime(200); });
-      expect(mouth.style.opacity).toBe('1');
+      expect(frames().filter((f) => f.style.opacity === '1')).toHaveLength(1);
+      expect(frames()[0].style.opacity).toBe('0');
       let blinked = false;
       for (let i = 0; i < 40 && !blinked; i += 1) {
         act(() => { vi.advanceTimersByTime(300); });
@@ -137,7 +139,8 @@ describe('分层立绘 rig（拆件）', () => {
     });
     const iris = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/iris.png"]');
     const brows = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/brows.png"]');
-    expect(iris.style.transform).toContain('translate(3.15px, 1.4px)');
+    expect(iris.style.transform).toContain('translate(5.95px, 2.4px)');
+    expect(getPetRig('deepseek', 'normal').clip).toContain('ellipse(');
     expect(brows.style.transform).toBe('translateY(-2.5px)');
     act(() => {
       root.render(<LayeredPetRig rig={rigDef} look={{ x: 0, y: 0 }} mood="hammered" />);
