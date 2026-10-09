@@ -388,33 +388,47 @@ export const SocialPanel = ({ characters, onUsage = () => {} }) => {
     const conversation = [...messages.filter((message) => !message.failed), userMessage];
     setMessages((items) => [...items, userMessage].slice(-150));
     setInput('');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90_000);
+    let timedOut = false;
     setBusy(true);
-    setStatus('逐个呼叫所选角色 API；后续角色会看到前面角色的回应。每个角色都会产生独立调用与用量。');
+    setStatus(`群聊开始：${selectedParticipants.length} 个角色将依次回应；后续角色会看到前面的回复。`);
 
-    for (const id of selectedParticipants) {
-      const character = characters[id];
-      if (!character) continue;
-      const recent = conversation.slice(-20).map((item) => ({
-        role: item.role === 'user' ? 'user' : 'assistant',
-        content: item.role === 'user' ? item.content : `${characters[item.characterId]?.name || '角色'}：${item.content}`,
-      }));
-      try {
-        const response = await aiService.sendPrompt({
-          provider: id,
-          messages: recent,
-          systemPrompt: `你是 ${character.name}，个性：${character.voiceStyle}。你正在与其他桌宠角色和用户进行轻松、尊重的群聊。结合其他角色刚才说的话自然接话，也可以表达友好的角色关系或分歧；以角色身份回应，避免冒充真实用户。`,
-          onComplete: (usage) => onUsage(id, `桌宠群聊：${prompt.slice(0, 80)}`, usage),
-        });
-        const reply = { id: `social-${Date.now()}-${id}`, role: 'character', characterId: id, content: response.fullText, tokens: response.tokens, usageSource: response.usageSource, createdAt: new Date().toISOString() };
-        conversation.push(reply);
-        setMessages((items) => [...items, reply].slice(-150));
-      } catch (error) {
-        const failure = { id: `social-error-${Date.now()}-${id}`, role: 'character', characterId: id, failed: true, content: `API 调用失败：${error.message || '检查该角色的 API 配置。'}`, createdAt: new Date().toISOString() };
-        setMessages((items) => [...items, failure].slice(-150));
+    try {
+      for (let index = 0; index < selectedParticipants.length; index += 1) {
+        const id = selectedParticipants[index];
+        const character = characters[id];
+        if (!character) continue;
+        setStatus(`正在等待 ${character.name} 回复（${index + 1}/${selectedParticipants.length}）…`);
+        const recent = conversation.slice(-20).map((item) => ({
+          role: item.role === 'user' ? 'user' : 'assistant',
+          content: item.role === 'user' ? item.content : `${characters[item.characterId]?.name || '角色'}：${item.content}`,
+        }));
+        try {
+          const response = await aiService.sendPrompt({
+            provider: id,
+            messages: recent,
+            systemPrompt: `你是 ${character.name}，个性：${character.voiceStyle}。你正在与其他桌宠角色和用户进行轻松、尊重的群聊。结合其他角色刚才说的话自然接话，也可以表达友好的角色关系或分歧；以角色身份回应，避免冒充真实用户。`,
+            signal: controller.signal,
+            onComplete: (usage) => onUsage(id, `桌宠群聊：${prompt.slice(0, 80)}`, usage),
+          });
+          const reply = { id: `social-${Date.now()}-${id}`, role: 'character', characterId: id, content: response.fullText, tokens: response.tokens, usageSource: response.usageSource, createdAt: new Date().toISOString() };
+          conversation.push(reply);
+          setMessages((items) => [...items, reply].slice(-150));
+        } catch (error) {
+          if (controller.signal.aborted) {
+            timedOut = true;
+            break;
+          }
+          const failure = { id: `social-error-${Date.now()}-${id}`, role: 'character', characterId: id, failed: true, content: `API 调用失败：${error.message || '检查该角色的 API 配置。'}`, createdAt: new Date().toISOString() };
+          setMessages((items) => [...items, failure].slice(-150));
+        }
       }
+    } finally {
+      clearTimeout(timeoutId);
+      setBusy(false);
+      setStatus(timedOut ? '群聊等待超过 90 秒，已停止本轮并保留已有回复。' : '本轮角色回应结束。');
     }
-    setBusy(false);
-    setStatus('本轮角色回应结束。');
   };
 
   return (
