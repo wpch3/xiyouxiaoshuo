@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AI_CHARACTERS, FOOD_ITEMS } from './constants/characters';
 import { getToolButtonArt } from './constants/toolArt';
 import { CompactPetStage } from './components/CompactPetStage';
+import { CharacterStageCard, CharacterPickerCard } from './components/CharacterCards';
 import { LiveAnimeModel } from './components/LiveAnimeModel';
 import { FloatingDeskPetOverlay } from './components/BongoPetLive';
 import { ClickParticleCanvas } from './components/ClickParticleCanvas';
@@ -633,198 +634,33 @@ export default function App() {
           /* 完整仪表盘模式 */
           <div className="app-main-grid">
             <div className="app-left-col">
-            {/* 左侧：拟人角色舞台与互动专区 */}
-            <div
-              className="pet-main-card"
-              style={{
-                backgroundColor: char.cardBg,
-                borderRadius: '24px',
-                border: `1px solid ${char.borderTone}`,
-                padding: '24px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                position: 'relative',
-                boxShadow: `0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)`,
-                overflow: 'hidden'
+            {/* 左栏三卡分离：角色舞台 / 选择 / 对话 */}
+            <CharacterStageCard
+              char={char}
+              currentId={currentId}
+              favorability={favorability[currentId]}
+              mood={mood}
+              isSpeaking={isSpeaking}
+              activeTool={activeTool}
+              form={characterForm}
+              speechText={stripEmoji(speechText)}
+              petZoom={petScale}
+              onPetZoom={setPetScale}
+              onPet={handlePetAvatar}
+              onHammer={handleHammerAvatar}
+            />
+
+            <CharacterPickerCard
+              char={char}
+              currentId={currentId}
+              characterForm={characterForm}
+              onSelectForm={(id) => {
+                soundManager.playSwitch();
+                setCharacterForm(id);
               }}
-            >
-              {/* 背景装饰光 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '-80px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '280px',
-                  height: '280px',
-                  borderRadius: '50%',
-                  background: char.glowColor,
-                  filter: 'blur(70px)',
-                  zIndex: 0,
-                  pointerEvents: 'none'
-                }}
-              />
-
-              {/* 角色卡头衔 */}
-              <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1, marginBottom: '6px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff' }}>{char.name}</h2>
-                    <span
-                      style={{
-                        fontSize: '0.7rem',
-                        padding: '2px 8px',
-                        borderRadius: '20px',
-                        backgroundColor: `${char.color}25`,
-                        color: char.accentColor,
-                        fontWeight: 600
-                      }}
-                    >
-                      Lv.{Math.floor(favorability[currentId] / 10) + 1}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>{char.title}</p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f43f5e', fontSize: '0.85rem', fontWeight: 700 }}>
-                    <Heart size={16} fill="#f43f5e" />
-                    <span>{favorability[currentId]}%</span>
-                  </div>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}>羁绊好感度</span>
-                </div>
-              </div>
-
-              {/* 实时台词气泡 */}
-              <div
-                className="speech-bubble pet-speech-bubble"
-                style={{
-                  zIndex: 2,
-                  marginTop: '12px',
-                  marginBottom: '10px',
-                  backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                  border: `1px solid ${char.color}50`,
-                  borderColor: `${char.color}50`,
-                  padding: '12px 18px',
-                  borderRadius: '18px',
-                  fontSize: '0.85rem',
-                  lineHeight: 1.45,
-                  maxWidth: '320px',
-                  minHeight: '48px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  color: '#e2e8f0',
-                  backdropFilter: 'blur(8px)'
-                }}
-              >
-                <span>{stripEmoji(speechText)}</span>
-              </div>
-
-              {/* 角色缩放控制：太小看不清/不好点时放大，记忆到本机 */}
-              <div
-                style={{
-                  zIndex: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '6px',
-                  color: '#94a3b8',
-                  fontSize: '0.7rem'
-                }}
-              >
-                <button
-                  type="button"
-                  aria-label="缩小角色"
-                  onClick={() => setPetScale((v) => Math.max(0.7, Number((v - 0.1).toFixed(2))))}
-                  style={{ display: 'grid', placeItems: 'center', width: 26, height: 26, borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', cursor: 'pointer' }}
-                ><ZoomOut size={14} /></button>
-                <span style={{ minWidth: 40, textAlign: 'center' }}>{Math.round(petScale * 100)}%</span>
-                <button
-                  type="button"
-                  aria-label="放大角色"
-                  onClick={() => setPetScale((v) => Math.min(1.5, Number((v + 0.1).toFixed(2))))}
-                  style={{ display: 'grid', placeItems: 'center', width: 26, height: 26, borderRadius: 8, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', cursor: 'pointer' }}
-                ><ZoomIn size={14} /></button>
-                <span>角色大小</span>
-              </div>
-
-              {/* 形态快速切换（常驻可见，不再被聊天区挤出） */}
-              <div style={{ display: 'flex', gap: '4px', zIndex: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {[
-                  { id: 'normal', label: '少女' },
-                  { id: 'loli', label: '萝莉' },
-                  { id: 'mature', label: '青年女性' },
-                  { id: 'chibi', label: 'Q版' }
-                ].map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => {
-                      soundManager.playSwitch();
-                      setCharacterForm(f.id);
-                    }}
-                    style={{
-                      fontSize: '0.66rem',
-                      padding: '3px 9px',
-                      borderRadius: '999px',
-                      border: `1px solid ${characterForm === f.id ? char.color : 'rgba(255,255,255,0.14)'}`,
-                      backgroundColor: characterForm === f.id ? `${char.color}33` : 'rgba(255,255,255,0.05)',
-                      color: '#e2e8f0',
-                      cursor: 'pointer'
-                    }}
-                  >{f.label}</button>
-                ))}
-              </div>
-
-              {/* 核心立绘角色 (分层拆件 rig：视线/眨眼/口型/眉/发丝摆动) */}
-              <div
-                style={{
-                  zIndex: 2,
-                  margin: '4px 0 10px 0',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  width: '100%'
-                }}
-              >
-                <LiveAnimeModel
-                  characterId={currentId}
-                  form={characterForm}
-                  mood={mood}
-                  activeTool={activeTool}
-                  isSpeaking={isSpeaking}
-                  accentColor={char.accentColor}
-                  onPet={handlePetAvatar}
-                  onHammer={handleHammerAvatar}
-                  size={320}
-                  scale={petScale}
-                />
-              </div>
-
-              <div className="pet-tool-dock" style={{ zIndex: 3, '--pet-accent': char.color }} aria-label="桌宠互动工具">
-                {[
-                  { id: 'pointer', label: '观察', icon: <MousePointer2 size={23} strokeWidth={1.8} /> },
-                  { id: 'pet', label: '手抚摸', art: getToolButtonArt(currentId, 'pet') },
-                  { id: 'hammer', label: '小锤子', art: getToolButtonArt(currentId, 'hammer') },
-                ].map((tool) => (
-                  <button
-                    key={tool.id}
-                    type="button"
-                    className="pet-tool-button"
-                    aria-pressed={activeTool === tool.id}
-                    onClick={() => setActiveTool(tool.id)}
-                  >
-                    {tool.art ? <img src={tool.art.src} style={{ filter: tool.art.filter }} alt="" /> : tool.icon}
-                    <span>{tool.label}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="pet-tool-hint" aria-live="polite">
-                {activeTool === 'hammer' ? '小锤子已选中：移到立绘上点击' : activeTool === 'pet' ? '抚摸已选中：按住并在立绘上拖动' : '移动鼠标到立绘上，角色会跟随视线'}
-              </div>
-
-              </div>
+              activeTool={activeTool}
+              onSelectTool={setActiveTool}
+            />
 
               <div style={{ width: '100%', borderRadius: '24px', border: `1px solid ${char.color}35`, background: 'rgba(15, 23, 42, 0.55)', padding: '16px 18px', backdropFilter: 'blur(8px)' }}>
               {/* 实时 AI 对话交互条 (支持与少女/桌宠实时发问和流式说话) */}

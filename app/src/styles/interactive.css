@@ -582,7 +582,7 @@ body.pet-compact-body .compact-stage { background: transparent !important; }
 .compact-stage .pet-stage-caption { display: none; }
 .compact-stage .pet-stage-backdrop { display: none; }
 .compact-stage .dynamic-pet-stage { background: transparent; box-shadow: none; border-radius: 0; }
-/* 原生透明窗：品红为 Win32 LWA_COLORKEY 键色 */
+/* 原生透明窗：逐像素 alpha 决定命中（见 native_pet_c，Win32 UpdateLayeredWindow） */
 body.pet-native-window, body.pet-native-window .compact-stage { background: transparent !important; }
 
 /* ── 主布局响应式与左栏分卡（v2 重构） ── */
@@ -593,3 +593,60 @@ body.pet-native-window, body.pet-native-window .compact-stage { background: tran
   .app-main-grid { grid-template-columns: 1fr; height: auto; overflow: visible; }
   .app-left-col { overflow: visible; }
 }
+
+/* ── 小窗判定：只有角色不透明像素可点；其余区域与所有浮层默认隐藏、不接收事件 ── */
+body.pet-compact-body .compact-stage { pointer-events: none; }
+body.pet-compact-body .compact-stage .dynamic-pet-stage { pointer-events: none; }
+body.pet-compact-body .compact-stage.is-hit .dynamic-pet-stage { pointer-events: auto; }
+body.pet-compact-body .compact-stage-token,
+body.pet-compact-body .compact-stage-summon,
+body.pet-compact-body .compact-stage-speech {
+  opacity: 0; pointer-events: none; transition: opacity .18s ease;
+}
+body.pet-compact-body .compact-stage.is-hit .compact-stage-token,
+body.pet-compact-body .compact-stage.is-hit .compact-stage-summon,
+body.pet-compact-body .compact-stage.is-hit .compact-stage-speech { opacity: 1; pointer-events: auto; }
+
+/* ── 左栏三卡：角色舞台 / 选择 / 对话 ── */
+.app-left-col .char-card {
+  border: 1px solid rgba(255,255,255,.10); border-radius: 22px; padding: 16px 18px;
+  background: rgba(15,23,42,.62); box-shadow: 0 16px 40px rgba(4,10,24,.30);
+  backdrop-filter: blur(8px); flex: 0 0 auto;
+}
+.char-card-stage {
+  height: clamp(440px, 66vh, 700px); display: flex; flex-direction: column; gap: 8px;
+  overflow: hidden; position: relative;
+}
+.char-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.char-card-title-row { display: flex; align-items: center; gap: 8px; }
+.char-card-title-row h2 { font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0; }
+.char-card-level { font-size: .68rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.char-card-subtitle { font-size: .78rem; color: #94a3b8; margin: 2px 0 0; }
+.char-card-favor { text-align: right; color: #f43f5e; font-weight: 700; font-size: .82rem; }
+.char-card-favor-value { display: inline-flex; align-items: center; gap: 4px; }
+.char-card-favor-label { display: block; font-size: .66rem; color: #64748b; font-weight: 400; }
+.char-card-bubble {
+  align-self: center; max-width: min(100%, 360px); padding: 8px 14px; border-radius: 16px;
+  background: rgba(15,23,42,.92); border: 1px solid; color: #e2e8f0; font-size: .8rem;
+  line-height: 1.45; text-align: center;
+}
+.char-card-zoombar { display: flex; align-items: center; justify-content: center; gap: 8px; color: #94a3b8; font-size: .72rem; }
+.char-card-zoom-value { min-width: 44px; text-align: center; }
+/* 舞台区：占满剩余高度；内容超出时滚动，立绘始终居中 */
+.char-card-stage-area { flex: 1 1 auto; min-height: 0; overflow: auto; position: relative; border-radius: 18px; }
+.char-card-stage-inner {
+  min-height: 100%; min-width: 100%; display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box; padding: 4px 0;
+}
+.char-card-stage-inner .dynamic-pet-stage { flex: 0 0 auto; }
+
+.char-card-picker { display: flex; flex-direction: column; gap: 8px; }
+.char-card-section-label { font-size: .7rem; color: #94a3b8; font-weight: 600; letter-spacing: .02em; }
+.char-card-forms { display: flex; flex-wrap: wrap; gap: 6px; }
+.char-form-chip {
+  font-size: .72rem; padding: 4px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: #e2e8f0;
+}
+.char-form-chip.is-active { font-weight: 700; }
+.char-card-tools { margin-top: 2px; }
+.char-card-hint { font-size: .7rem; color: #94a3b8; text-align: center; }

@@ -43,6 +43,8 @@ export const LiveAnimeModel = ({
   activeTool = 'pointer',
   isSpeaking = false,
   size = 320,
+  boxWidth = null,
+  boxHeight = null,
   accentColor = '#79A8F4',
   onPet = () => {},
   onHammer = () => {},
@@ -59,8 +61,9 @@ export const LiveAnimeModel = ({
 
   const rig = getPetRig(characterId, form);
   const fallbackImage = `/characters/${characterId}.png`;
-  const width = stageWidth(size, scale);
-  const height = stageHeight(size, scale);
+  // 外部给定盒子（左栏按实测空间算出）优先；否则沿用旧的 size*scale 几何（小窗等场景）
+  const width = boxWidth || stageWidth(size, scale);
+  const height = boxHeight || stageHeight(size, scale);
 
   useEffect(() => {
     setImageSrc(getPortraitPath(characterId, form));

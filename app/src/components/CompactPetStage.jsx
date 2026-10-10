@@ -10,6 +10,9 @@ import {
 } from 'lucide-react';
 import { LiveAnimeModel } from './LiveAnimeModel';
 import { getToolButtonArt } from '../constants/toolArt';
+import { getPetRig } from '../constants/petRig';
+import { buildHitMask, maskHitAt, renderedRigRect } from '../utils/petHitMask';
+import { RIG_ASPECT } from './CharacterCards';
 
 const SCALE_KEY = 'pet_compact_scale_v1';
 const MIN_SCALE = 0.5;
@@ -79,6 +82,49 @@ export const CompactPetStage = ({
     node.addEventListener('wheel', onWheel, { passive: true });
     return () => node.removeEventListener('wheel', onWheel);
   }, []);
+
+  // 像素判定：只有角色不透明像素响应鼠标（小窗其余区域完全穿透）
+  const hitMaskRef = useRef(null);
+  useEffect(() => {
+    let alive = true;
+    hitMaskRef.current = null;
+    buildHitMask(getPetRig(characterId, form)).then((mask) => {
+      if (alive) hitMaskRef.current = mask;
+    });
+    return () => { alive = false; };
+  }, [characterId, form]);
+
+  useEffect(() => {
+    if (contained || typeof window === 'undefined') return undefined;
+    let hit = false;
+    const setHit = (next) => {
+      if (next === hit) return;
+      hit = next;
+      if (rootRef.current) rootRef.current.classList.toggle('is-hit', next);
+    };
+    const onMove = (event) => {
+      const root = rootRef.current;
+      const layer = root && root.querySelector('.pet-rig-layer');
+      const rect = layer ? renderedRigRect(layer, RIG_ASPECT) : null;
+      if (!rect) {
+        setHit(false);
+        return;
+      }
+      const u = (event.clientX - rect.left) / rect.width;
+      const v = (event.clientY - rect.top) / rect.height;
+      setHit(maskHitAt(hitMaskRef.current, u, v));
+    };
+    const onLeave = (event) => {
+      if (!event.relatedTarget) setHit(false);
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    document.documentElement.addEventListener('pointerleave', onLeave);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      document.documentElement.removeEventListener('pointerleave', onLeave);
+      setHit(false);
+    };
+  }, [contained]);
 
   useEffect(() => {
     if (!menu) return undefined;
