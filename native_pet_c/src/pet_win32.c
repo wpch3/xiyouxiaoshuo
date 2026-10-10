@@ -10,7 +10,7 @@
  *
  * 命令行：
  *   AITokenPetC.exe [--assets <素材目录>] [--workspace-url <主工作区地址>]
- * 默认素材目录依次查找：<exe>/../../app/public/characters/deepseek_layers 等。
+ * 默认素材目录依次查找：<exe>/../../assets/xiaoxun/layers 等。
  *
  * 注意：本文件在 Linux 沙箱中只做交叉编译验证（zig），运行效果需要 Windows 真机确认。
  */
@@ -105,8 +105,8 @@ static void find_assets_dir(void) {
     wchar_t probe[MAX_PATH * 2];
     wchar_t *slash;
     static const wchar_t *rels[] = {
-        L"\\..\\..\\app\\public\\characters\\deepseek_layers",
-        L"\\..\\app\\public\\characters\\deepseek_layers",
+        L"\\..\\..\\assets\\xiaoxun\\layers",
+        L"\\..\\assets\\xiaoxun\\layers",
         L"\\assets"};
     size_t i;
 
@@ -115,7 +115,7 @@ static void find_assets_dir(void) {
     slash = wcsrchr(exe, L'\\');
     if (slash) *slash = L'\0';
     for (i = 0; i < sizeof(rels) / sizeof(rels[0]); i++) {
-        swprintf(probe, sizeof(probe) / sizeof(probe[0]), L"%s%s\\base_rig.png", exe, rels[i]);
+        swprintf(probe, sizeof(probe) / sizeof(probe[0]), L"%s%s\\body_base.png", exe, rels[i]);
         if (file_exists(probe)) {
             swprintf(g_assets_dir, sizeof(g_assets_dir) / sizeof(g_assets_dir[0]), L"%s%s", exe, rels[i]);
             return;
@@ -522,7 +522,7 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE prev, LPWSTR cmdline, int show) {
     g_hinst = hinst;
     parse_args();
     if (g_assets_dir[0] == L'\0') {
-        MessageBoxW(NULL, L"未找到桌宠素材目录，请用 --assets <目录> 指定 deepseek_layers 文件夹。",
+        MessageBoxW(NULL, L"未找到桌宠素材目录，请用 --assets <目录> 指定 assets/xiaoxun/layers 文件夹。",
                     L"AI Token Pet", MB_ICONERROR);
         return 1;
     }

@@ -6,7 +6,7 @@
 
 CC      ?= gcc
 CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -Werror -Iinclude
-ASSETS  ?= ../app/public/characters/deepseek_layers
+ASSETS  ?= ../assets/xiaoxun/layers
 OUT     := build
 
 .PHONY: all test win win-zig clean

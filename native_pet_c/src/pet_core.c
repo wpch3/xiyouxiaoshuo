@@ -10,18 +10,14 @@
 
 /* 层清单：与 app/src/constants/petRig.js、desktop_pet_qt.py 一致 */
 const PetLayerSpec PET_LAYERS[PET_LAYER_COUNT] = {
-    {"back_hair_l", PET_MODE_SWAY, 2.1, PET_SWAY_AWAKE},
-    {"back_hair_r", PET_MODE_SWAY, 2.8, PET_SWAY_AWAKE},
-    {"base_rig", PET_MODE_BASE, 0.0, 0.0},
-    {"iris", PET_MODE_GAZE, 0.0, 0.0},
-    {"eye_hair", PET_MODE_STATIC, 0.0, 0.0},
-    {"eyelids", PET_MODE_BLINK, 0.0, 0.0},
-    {"brows", PET_MODE_BROW, 0.0, 0.0},
-    {"arm_l", PET_MODE_STATIC, 0.0, 0.0},
-    {"arm_r_rest", PET_MODE_STATIC, 0.0, 0.0},
-    {"side_hair_l", PET_MODE_SWAY, 0.7, PET_SWAY_AWAKE},
-    {"side_hair_r", PET_MODE_SWAY, 1.4, PET_SWAY_AWAKE},
-    {"bangs", PET_MODE_SWAY, 0.0, PET_SWAY_AWAKE}};
+    {"body_base", PET_MODE_BASE, 0.0, 0.0},
+    {"eye_open_l", PET_MODE_GAZE, 0.0, 0.0},
+    {"eye_open_r", PET_MODE_GAZE, 0.0, 0.0},
+    {"eye_closed_l", PET_MODE_BLINK, 0.0, 0.0},
+    {"eye_closed_r", PET_MODE_BLINK, 0.0, 0.0},
+    {"brow_l", PET_MODE_BROW, 0.0, 0.0},
+    {"brow_r", PET_MODE_BROW, 0.0, 0.0},
+    {"mouth_closed", PET_MODE_STATIC, 0.0, 0.0}};
 
 /* 动作规格：优先级 / 可中断 / 时长（秒，0=不过期） */
 const PetActionSpec PET_ACTION_SPECS[4] = {

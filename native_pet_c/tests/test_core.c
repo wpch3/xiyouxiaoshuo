@@ -24,24 +24,24 @@ static int g_total = 0;
 
 static void test_layer_table(void) {
     static const char *expected[PET_LAYER_COUNT] = {
-        "back_hair_l", "back_hair_r", "base_rig", "iris", "eye_hair", "eyelids",
-        "brows", "arm_l", "arm_r_rest", "side_hair_l", "side_hair_r", "bangs"};
+        "body_base", "eye_open_l", "eye_open_r", "eye_closed_l", "eye_closed_r",
+        "brow_l", "brow_r", "mouth_closed"};
     int i, ok = 1;
     for (i = 0; i < PET_LAYER_COUNT; i++) {
         if (strcmp(PET_LAYERS[i].name, expected[i]) != 0) ok = 0;
     }
     CHECK("layer_z_order_matches_handover", ok);
-    CHECK("iris_is_gaze_layer", PET_LAYERS[3].mode == PET_MODE_GAZE);
-    CHECK("eyelids_is_blink_layer", PET_LAYERS[5].mode == PET_MODE_BLINK);
+    CHECK("iris_is_gaze_layer", PET_LAYERS[1].mode == PET_MODE_GAZE);
+    CHECK("eyelids_is_blink_layer", PET_LAYERS[3].mode == PET_MODE_BLINK);
 }
 
 static void test_geometry(void) {
     PetSize a = pet_window_size(0.55);
     PetSize b = pet_window_size(1.0);
     PetSize c = pet_window_size(99.0);
-    CHECK("window_size_default_233x347", a.width == 233 && a.height == 347);
-    CHECK("window_size_unit_424x632", b.width == 424 && b.height == 632);
-    CHECK("scale_clamped_max", NEAR(c.width, 424 * PET_SCALE_MAX, 1.0));
+    CHECK("window_size_default_484x774", a.width == 484 && a.height == 774);
+    CHECK("window_size_unit_880x1408", b.width == PET_RIG_W && b.height == PET_RIG_H);
+    CHECK("scale_clamped_max", NEAR(c.width, PET_RIG_W * PET_SCALE_MAX, 1.0));
     CHECK("scale_clamp_min", NEAR(pet_clamp_scale(0.01), PET_SCALE_MIN, 1e-9));
     CHECK("wheel_up_grows", pet_step_scale(1.0, 1) > 1.0);
     CHECK("wheel_down_shrinks", pet_step_scale(1.0, 0) < 1.0);
@@ -131,13 +131,13 @@ static void test_gaze_limits(void) {
     CHECK("gaze_eases_to_target", NEAR(s.look_x, 1.0, 1e-3));
     n = pet_layout(&s, 13.2, d);
     CHECK("layout_count", n == PET_LAYER_COUNT);
-    CHECK("gaze_x_limit_3px_rig", NEAR(d[3].dx, 3.0, 1e-3));
-    CHECK("gaze_y_limit_1p5px_rig", NEAR(d[3].dy, 1.5, 1e-3));
+    CHECK("gaze_x_limit_rig", NEAR(d[1].dx, PET_GAZE_LIMIT_X, 1e-3));
+    CHECK("gaze_y_limit_rig", NEAR(d[1].dy, PET_GAZE_LIMIT_Y, 1e-3));
     /* 缩放 2x 时位移等比放大 */
     pet_init(&s, 0.0, 2.0);
     for (i = 0; i < 400; i++) pet_update(&s, i * 0.033, 0.0, -1.0, -1.0);
     pet_layout(&s, 13.2, d);
-    CHECK("gaze_scales_with_zoom", NEAR(d[3].dx, -6.0, 1e-3) && NEAR(d[3].dy, -3.0, 1e-3));
+    CHECK("gaze_scales_with_zoom", NEAR(d[1].dx, -2.0 * PET_GAZE_LIMIT_X, 1e-3) && NEAR(d[1].dy, -2.0 * PET_GAZE_LIMIT_Y, 1e-3));
 }
 
 static void test_blink_schedule(void) {
@@ -150,7 +150,7 @@ static void test_blink_schedule(void) {
         int vis;
         pet_update(&s, t, 0.0, 0.0, 0.0);
         pet_layout(&s, t, d);
-        vis = d[5].visible;
+        vis = d[3].visible;
         if (vis && !was) blinks++;
         was = vis;
     }
@@ -160,9 +160,9 @@ static void test_blink_schedule(void) {
     s.next_blink = 0.0;
     pet_update(&s, 1.0, 0.0, 0.0, 0.0);
     pet_layout(&s, 1.0, d);
-    CHECK("eyelids_visible_during_hold", d[5].visible == 1);
+    CHECK("eyelids_visible_during_hold", d[3].visible == 1);
     pet_layout(&s, 1.0 + PET_BLINK_HOLD + 0.01, d);
-    CHECK("eyelids_hidden_after_hold", d[5].visible == 0);
+    CHECK("eyelids_hidden_after_hold", d[3].visible == 0);
 }
 
 static void test_hop_and_pat_alpha(void) {
@@ -174,7 +174,7 @@ static void test_hop_and_pat_alpha(void) {
     pet_layout(&s, 5.05, d);
     ref = PET_SCALE_DEFAULT / PET_SCALE_DEFAULT;
     CHECK("pat_hops_up", NEAR(d[2].dy, -PET_HOP_PAT * ref, 1e-6));
-    CHECK("pat_eyelids_half_alpha", d[5].visible && NEAR(d[5].alpha, PET_PAT_EYE_ALPHA, 1e-9));
+    CHECK("pat_eyelids_half_alpha", d[3].visible && NEAR(d[3].alpha, PET_PAT_EYE_ALPHA, 1e-9));
     pet_init(&s, 0.0, PET_SCALE_DEFAULT);
     pet_on_press(&s, 5.0, 200.0, 347.0);
     pet_layout(&s, 5.05, d);
@@ -233,9 +233,8 @@ static void test_rand_range(void) {
 
 static int check_assets(const char *dir) {
     static const char *names[] = {
-        "back_hair_l", "back_hair_r", "base_rig", "iris", "eye_hair", "eyelids",
-        "brows", "arm_l", "arm_r_rest", "side_hair_l", "side_hair_r", "bangs",
-        "mouth_open", "mouth_e", "mouth_i", "mouth_o", "mouth_u"};
+        "body_base", "eye_open_l", "eye_open_r", "eye_closed_l", "eye_closed_r",
+        "brow_l", "brow_r", "mouth_closed"};
     int i, ok = 1;
     for (i = 0; i < (int)(sizeof names / sizeof names[0]); i++) {
         char path[1024];
@@ -249,7 +248,7 @@ static int check_assets(const char *dir) {
             fclose(f);
         }
     }
-    CHECK("assets_17_layers_present", ok);
+    CHECK("assets_layers_present", ok);
     return ok;
 }
 
