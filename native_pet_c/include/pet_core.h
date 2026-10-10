@@ -38,6 +38,8 @@ extern "C" {
 #define PET_PAT_THROTTLE 0.25
 #define PET_PAT_EYE_ALPHA 0.55
 /* 位移/摆动幅度按 0.55 参考缩放标定（与原 Qt 版一致），绘制时乘 scale/0.55 */
+/* 规格：非 Q 版形态禁止整体位移。整体跳动默认关闭，仅 Q 版形态可开启。 */
+#define PET_BODY_HOP_ENABLED 0
 #define PET_HOP_TAP 6.0
 #define PET_HOP_PAT 3.0
 #define PET_SLEEP_BOB 0.8

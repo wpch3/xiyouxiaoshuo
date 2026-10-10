@@ -199,7 +199,7 @@ static BOOL build_canvas(int w, int h) {
         return FALSE;
     if (GdipGetImageGraphicsContext(g_canvas, &g_gfx) != Ok) return FALSE;
     /* 每帧 12 层重采样：用双线性兼顾性能与观感（3x 缩放时尤其重要） */
-    GdipSetInterpolationMode(g_gfx, InterpolationModeHighQualityBilinear);
+    GdipSetInterpolationMode(g_gfx, InterpolationModeBilinear); /* 较 HighQualityBilinear 快约数倍 */
     g_w = w;
     g_h = h;
     return TRUE;
@@ -238,12 +238,28 @@ static void push_to_screen(void) {
     ReleaseDC(NULL, screen);
 }
 
+static PetLayerDraw g_prev[PET_LAYER_COUNT];
+static int g_prev_valid = 0;
+
+static int same_layout(const PetLayerDraw *a, const PetLayerDraw *b) {
+    int i;
+    for (i = 0; i < PET_LAYER_COUNT; i++) {
+        if (a[i].visible != b[i].visible || a[i].layer != b[i].layer) return 0;
+        if (a[i].dx != b[i].dx || a[i].dy != b[i].dy || a[i].alpha != b[i].alpha) return 0;
+    }
+    return 1;
+}
+
 static void render(double now) {
     PetLayerDraw d[PET_LAYER_COUNT];
     int i;
 
     if (!g_gfx) return;
     pet_layout(&g_pet, now, d);
+    /* 布局没有变化（待机且不在眨眼/视线移动）时不重绘、不推送窗口，省 CPU */
+    if (g_prev_valid && same_layout(d, g_prev)) return;
+    memcpy(g_prev, d, sizeof d);
+    g_prev_valid = 1;
     GdipGraphicsClear(g_gfx, 0x00000000);
     for (i = 0; i < PET_LAYER_COUNT; i++) {
         GpBitmap *img = g_layer_img[d[i].layer];

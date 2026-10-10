@@ -168,17 +168,15 @@ static void test_blink_schedule(void) {
 static void test_hop_and_pat_alpha(void) {
     PetState s;
     PetLayerDraw d[PET_LAYER_COUNT];
-    double ref;
     pet_init(&s, 0.0, PET_SCALE_DEFAULT);
     pet_on_press(&s, 5.0, 10.0, 347.0);
     pet_layout(&s, 5.05, d);
-    ref = PET_SCALE_DEFAULT / PET_SCALE_DEFAULT;
-    CHECK("pat_hops_up", NEAR(d[2].dy, -PET_HOP_PAT * ref, 1e-6));
+    CHECK("pat_no_body_hop", NEAR(d[2].dy, 0.0, 1e-6));
     CHECK("pat_eyelids_half_alpha", d[5].visible && NEAR(d[5].alpha, PET_PAT_EYE_ALPHA, 1e-9));
     pet_init(&s, 0.0, PET_SCALE_DEFAULT);
     pet_on_press(&s, 5.0, 200.0, 347.0);
     pet_layout(&s, 5.05, d);
-    CHECK("tap_hops_more_than_pat", NEAR(d[2].dy, -PET_HOP_TAP * ref, 1e-6));
+    CHECK("tap_no_body_hop", NEAR(d[2].dy, 0.0, 1e-6));
 }
 
 static void test_mouth_scheduler(void) {

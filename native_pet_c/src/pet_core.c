@@ -186,9 +186,11 @@ int pet_layout(const PetState *s, double now, PetLayerDraw out[PET_LAYER_COUNT])
     double hop = 0.0;
     int i;
 
-    if (tapping) hop = -PET_HOP_TAP * ref;
-    else if (patting) hop = -PET_HOP_PAT * ref;
-    if (sleeping) hop += sin(now * 1.0) * PET_SLEEP_BOB * ref;
+    if (PET_BODY_HOP_ENABLED) {
+        if (tapping) hop = -PET_HOP_TAP * ref;
+        else if (patting) hop = -PET_HOP_PAT * ref;
+        if (sleeping) hop += sin(now * 1.0) * PET_SLEEP_BOB * ref;
+    }
 
     for (i = 0; i < PET_LAYER_COUNT; i++) {
         const PetLayerSpec *spec = &PET_LAYERS[i];
