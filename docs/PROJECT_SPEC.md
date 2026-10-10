@@ -283,3 +283,11 @@
 - 当前阶段重点：先把基础形象做好（小寻 deepseek 少女形态的干净底板、眼/眉/嘴状态、头发分层，然后是身体与骨骼）。
 - 已清理：失败的头部实验素材、旧对齐脚本、用户修图中间版、旧画布（提交 87be59c）。
 - 待确认是否删除：app 中仍在使用的旧 18 层 rig（public/characters/deepseek_layers）与旧立绘，因为当前 app 仍依赖它们，删除会影响构建与测试。
+
+## 14. 一刀两断与参考项目更新（2026-10-11）
+
+- 删除旧 `native_pet_c/`（前任的 C 桌宠与分层方案）。历史仍可从 git 查到（提交 `df2dc08` 及更早）。
+- 参考项目新增 Live2D 官方 `CubismWebFramework`（TypeScript 框架源码，Live2D Open Software License），仅作为骨骼与网格形变的参考。`Cubism Core` 为专有许可，不引入。商用时若年营收超过 1000 万日元，需要按 Live2D 的 Cubism SDK Release License 取得授权。
+- 参考项目现为六个：BongoCat、bongocat、ds-local-pet、VPet、airi、CubismWebFramework，均位于 `_refs/`，已在 `.gitignore` 中忽略。
+- 新方案：AI 生成拆件 PNG + 代码实现 2D 骨骼与网格形变（方案 A），不使用 Live2D 编辑器。
+- 小寻形象：方向 B（银蓝中发、呆毛、蓝色鲸尾发饰、青绿白外套）。发型三种：中发（基准）、长发、短发。
