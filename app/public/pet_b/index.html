@@ -14,11 +14,11 @@
 <body>
   <div class="wrap">
     <canvas id="pet" width="848" height="1360"></canvas>
-    <div class="hint">鼠标移动：视线跟随 · 呼吸与头发、鲸尾轻微摆动（无眨眼、无口型）</div>
+    <div class="hint">鼠标移动：视线跟随 · 自动眨眼 · 呼吸与头发、鲸尾轻微摆动（无口型）</div>
   </div>
   <script>
     const L = {};
-    const names = ['base_body_head', 'hair_back_medium', 'iris_L', 'iris_R', 'hair_front_medium', 'whale_hairpin'];
+    const names = ['base_body_head', 'hair_back_medium', 'iris_L', 'iris_R', 'hair_front_medium', 'whale_hairpin', 'lid_L', 'lid_R'];
     let loaded = 0;
     names.forEach((n) => {
       const img = new Image();
@@ -57,6 +57,43 @@
       ctx.restore();
     }
 
+
+    // 眨眼：按 Live2D CubismWebFramework CubismEyeBlink 的状态机
+    // 默认参数：闭合 0.1s、闭着 0.05s、睁开 0.15s、间隔随机（当前时刻起 0–7s）
+    const blink = { state: 'first', next: 0, start: 0, open: 1, interval: 4.0, closing: 0.1, closed: 0.05, opening: 0.15 };
+    function updateBlink(t) {
+      const since = t - blink.start;
+      switch (blink.state) {
+        case 'first':
+          blink.state = 'interval';
+          blink.next = t + Math.random() * (2 * blink.interval - 1);
+          blink.open = 1; break;
+        case 'closing': {
+          const k = Math.min(1, since / blink.closing);
+          blink.open = 1 - k;
+          if (k >= 1) { blink.state = 'closed'; blink.start = t; }
+          break;
+        }
+        case 'closed':
+          blink.open = 0;
+          if (since / blink.closed >= 1) { blink.state = 'opening'; blink.start = t; }
+          break;
+        case 'opening': {
+          const k = Math.min(1, since / blink.opening);
+          blink.open = k;
+          if (k >= 1) {
+            blink.state = 'interval';
+            blink.next = t + Math.random() * (2 * blink.interval - 1);
+          }
+          break;
+        }
+        case 'interval':
+          blink.open = 1;
+          if (t > blink.next) { blink.state = 'closing'; blink.start = t; }
+          break;
+      }
+    }
+
     function start() {
       const t0 = performance.now();
       function frame(now) {
@@ -65,6 +102,7 @@
         gaze.y += (gaze.ty - gaze.y) * 0.15;
         const breath = Math.sin(t * Math.PI * 2 * 0.25) * 1.5; // 约 4 秒一次
         const sway = Math.sin(t * Math.PI * 2 * 0.4) * 0.012;  // 头发摆动（弧度）
+        updateBlink(t);
         const whaleRot = Math.sin(t * Math.PI * 2 * 0.5) * 0.03;
 
         ctx.clearRect(0, 0, 848, 1360);
@@ -78,6 +116,16 @@
         ctx.drawImage(L.iris_L, 0, 0, 848, 1360);
         ctx.drawImage(L.iris_R, 0, 0, 848, 1360);
         ctx.restore();
+        // 眼皮（眨眼）：由 blink.open 驱动，闭合时从上方下落并淡入
+        const c = 1 - blink.open;
+        if (c > 0.001) {
+          const dy = -(1 - c) * 30 + breath;
+          ctx.save();
+          ctx.globalAlpha = Math.min(1, c * 1.2);
+          ctx.drawImage(L.lid_L, 385 - 40, 318 - 35 + dy, 80, 70);
+          ctx.drawImage(L.lid_R, 458 - 40, 318 - 35 + dy, 80, 70);
+          ctx.restore();
+        }
         // 前发（刘海）轻微摆动
         drawWithTransform(L.hair_front_medium, { pivot: PIVOT, rot: sway * 0.6, dy: breath });
         // 鲸尾发饰轻微晃动
