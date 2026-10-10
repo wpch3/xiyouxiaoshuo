@@ -1,0 +1,5 @@
+{
+  "canvas": { "width": 880, "height": 1408, "ratio": "1:1.6" },
+  "anchor": { "origin": "top-left", "note": "head layers share x scale with the 880-wide head test image; body layers align to the feet centre" },
+  "head_reference": { "source": "art/xiaoxun/head/head_test_front.png", "size": [880, 1184] }
+}
