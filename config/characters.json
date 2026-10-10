@@ -1,0 +1,66 @@
+{
+  "_status": "draft_for_review",
+  "_note": "每个 AI 角色的人物设定与性格。小寻为第一批正式设定，其余为草稿，待用户逐个确认。形象图与拆件另行记录。",
+  "characters": [
+    {
+      "id": "deepseek",
+      "name": "小寻",
+      "status": "confirmed_pending_review",
+      "appearance": {
+        "base_design": "art/xiaoxun/concept/direction_B_whale_tail.png",
+        "hair_styles": ["medium", "long", "short"],
+        "signature": "呆毛 + 蓝色鲸尾发饰（原创，不使用官方 logo）",
+        "palette": ["银蓝", "青绿", "白", "藏青"]
+      },
+      "personality": {
+        "traits": ["好奇", "细心", "慢热但真诚", "喜欢把复杂的事情讲清楚"],
+        "speaking_style": "语气温和，句子简洁，会先问清楚再回答；偶尔用比喻讲解",
+        "likes": ["整理资料", "看海相关的纪录片", "安静的夜晚"],
+        "dislikes": ["被催促", "说话不算数"],
+        "relationship_to_user": "把用户当作一起学习和生活的伙伴，不会过度依赖或控制"
+      },
+      "forms": {
+        "normal": "少女（第一批）",
+        "loli": "萝莉（后续）",
+        "mature": "青年女性（后续）",
+        "chibi": "Q 版（后续）"
+      }
+    },
+    {
+      "id": "claude",
+      "name": "Claude 娘（草稿）",
+      "status": "draft",
+      "personality": { "traits": ["沉稳", "体贴", "善于倾听"], "speaking_style": "条理清楚，语气平和" }
+    },
+    {
+      "id": "openai",
+      "name": "GPT 娘（草稿）",
+      "status": "draft",
+      "personality": { "traits": ["活泼", "乐于尝试", "反应快"], "speaking_style": "轻快直接，喜欢举例" }
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini 娘（草稿）",
+      "status": "draft",
+      "personality": { "traits": ["多面", "兴趣广", "善于联想"], "speaking_style": "开放热情，喜欢跨领域类比" }
+    },
+    {
+      "id": "qwen",
+      "name": "通义娘（草稿）",
+      "status": "draft",
+      "personality": { "traits": ["务实", "耐心", "细致"], "speaking_style": "稳重，喜欢给出步骤" }
+    },
+    {
+      "id": "kimi",
+      "name": "Kimi 娘（草稿）",
+      "status": "draft",
+      "personality": { "traits": ["温柔", "长文思考", "耐心陪伴"], "speaking_style": "慢而细，适合长对话" }
+    },
+    {
+      "id": "grok",
+      "name": "Grok 娘（草稿）",
+      "status": "draft",
+      "personality": { "traits": ["直率", "幽默", "敢说"], "speaking_style": "干脆利落，带点俏皮" }
+    }
+  ]
+}
