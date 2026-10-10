@@ -41,8 +41,9 @@
       const nx = (e.clientX - r.left) / r.width - 0.5;
       const ny = (e.clientY - r.top) / r.height - 0.5;
       // 视线限幅：只在眼白内移动
-      gaze.tx = Math.max(-1, Math.min(1, nx * 3)) * 4;
-      gaze.ty = Math.max(-1, Math.min(1, ny * 3)) * 2.5;
+      // 视线范围：左右 ±12px、上下 ±7px（画布 848 宽，虹膜约 25px）
+      gaze.tx = Math.max(-1, Math.min(1, nx * 2)) * 12;
+      gaze.ty = Math.max(-1, Math.min(1, ny * 2)) * 7;
     });
 
     function drawWithTransform(img, opts) {
