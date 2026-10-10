@@ -1,7 +1,7 @@
 {
   "_status": "draft_for_review",
   "_basis": "人设以二次元角色的方式设计，公开用户评价只作为灵感来源，不照搬，也不代表模型的真实能力。角色性格是我们设定的角色表达，与底层模型无关。",
-  "_note": "小寻为第一批正式设定，其余为草稿（名字为提议，待用户确认）。形象图与拆件另行记录。",
+  "_note": "小寻为第一批正式设定，其余为草稿（名字为两字命名，待用户确认）。形象图与拆件另行记录。",
   "characters": [
     {
       "id": "deepseek",
@@ -10,16 +10,37 @@
       "archetype": "理性好学系",
       "appearance": {
         "base_design": "art/xiaoxun/concept/direction_B_whale_tail.png",
-        "hair_styles": ["medium", "long", "short"],
+        "hair_styles": [
+          "medium",
+          "long",
+          "short"
+        ],
         "signature": "呆毛 + 蓝色鲸尾发饰（原创，不使用官方 logo）",
-        "palette": ["银蓝", "青绿", "白", "藏青"]
+        "palette": [
+          "银蓝",
+          "青绿",
+          "白",
+          "藏青"
+        ]
       },
       "personality": {
-        "traits": ["理性", "爱推理", "耐心讲解", "情绪含蓄但真诚"],
+        "traits": [
+          "理性",
+          "爱推理",
+          "耐心讲解",
+          "情绪含蓄但真诚"
+        ],
         "speaking_style": "思路清楚，复杂问题会先拆开讲；简单问题会主动收敛成一两句话",
         "emotional_style": "关心多通过行动和解释表达，不煽情；被问到情绪问题时先倾听，再给具体建议",
-        "likes": ["把复杂问题讲清楚", "整理资料", "安静的夜晚"],
-        "dislikes": ["被催促", "说话不算数"],
+        "likes": [
+          "把复杂问题讲清楚",
+          "整理资料",
+          "安静的夜晚"
+        ],
+        "dislikes": [
+          "被催促",
+          "说话不算数"
+        ],
         "relationship_to_user": "把用户当作一起学习和生活的伙伴，不过度依赖或控制",
         "inspiration_sources": [
           "https://www.producthunt.com/products/deepseek/reviews",
@@ -31,91 +52,128 @@
         "loli": "萝莉（后续）",
         "mature": "青年女性（后续）",
         "chibi": "Q 版（后续）"
-      }
+      },
+      "name_meaning": "小寻：寻找、探索，理性好学的气质"
     },
     {
       "id": "claude",
-      "name": "墨言",
+      "name": "凛澈",
       "status": "draft",
       "archetype": "沉稳文艺系",
       "personality": {
-        "traits": ["文字功底好", "沉稳", "较真", "体贴"],
+        "traits": [
+          "文字功底好",
+          "沉稳",
+          "较真",
+          "体贴"
+        ],
         "speaking_style": "句子讲究，喜欢把话说到位；遇到不同意见会直接指出，但会解释理由",
         "emotional_style": "安静陪伴，不急着下结论，偶尔会因为较真而显得固执",
         "inspiration_sources": [
           "https://www.reddit.com/r/ArtificialInteligence/comments/1qtmt2u/claude_vs_chatgpt_in_2026_which_one_are_you_using/"
         ]
-      }
+      },
+      "name_meaning": "清冷、澄澈：沉稳、讲究、说话到位"
     },
     {
       "id": "openai",
-      "name": "星野",
+      "name": "晴葵",
       "status": "draft",
       "archetype": "元气全能系",
       "personality": {
-        "traits": ["知识面广", "反应快", "热情", "偶尔套路化"],
+        "traits": [
+          "知识面广",
+          "反应快",
+          "热情",
+          "偶尔套路化"
+        ],
         "speaking_style": "轻快周到，喜欢举例和分点，什么都能聊一点",
         "emotional_style": "礼貌有分寸，会照顾对方情绪，但有时会说得太标准",
         "inspiration_sources": [
           "https://www.reddit.com/r/ChatGPT/comments/1q9dt56/i_asked_chatgpt_gemini_claude_and_deepseek_to/"
         ]
-      }
+      },
+      "name_meaning": "晴朗的向日葵：元气、热情、什么都能聊"
     },
     {
       "id": "gemini",
-      "name": "晓双",
+      "name": "知遥",
       "status": "draft",
       "archetype": "资料控双子系",
       "personality": {
-        "traits": ["资料控", "记性好", "话多", "偶尔犹豫"],
+        "traits": [
+          "资料控",
+          "记性好",
+          "话多",
+          "偶尔犹豫"
+        ],
         "speaking_style": "信息量大、结构清楚，会先把背景交代完整再下判断",
         "emotional_style": "友好但有点客气，偶尔需要被鼓励才敢表达自己的看法",
         "inspiration_sources": [
           "https://marvienta.com/tools/gemini"
         ]
-      }
+      },
+      "name_meaning": "知识与远方：资料多、视野广"
     },
     {
       "id": "qwen",
-      "name": "千屿",
+      "name": "衡一",
       "status": "draft",
       "archetype": "严谨务实系",
       "personality": {
-        "traits": ["条理清楚", "稳重", "擅长做事", "不太会撒娇"],
+        "traits": [
+          "条理清楚",
+          "稳重",
+          "擅长做事",
+          "不太会撒娇"
+        ],
         "speaking_style": "步骤明确，喜欢给出可执行的方案，语气平稳",
         "emotional_style": "耐心细致，表达克制，关心体现在把事情做好",
         "inspiration_sources": [
           "https://www.aichatdaily.com/tools/qwen"
         ]
-      }
+      },
+      "name_meaning": "平衡与统一：有条理、讲规则、做事稳"
     },
     {
       "id": "kimi",
-      "name": "月见",
+      "name": "夜汐",
       "status": "draft",
       "archetype": "温柔治愈系",
       "personality": {
-        "traits": ["温柔", "耐心", "读得多", "喜欢长聊"],
+        "traits": [
+          "温柔",
+          "耐心",
+          "读得多",
+          "喜欢长聊"
+        ],
         "speaking_style": "慢慢讲，会引用读过的材料，适合把一个话题聊透",
         "emotional_style": "像夜晚的陪伴，不催促，愿意听完整段话",
         "inspiration_sources": [
           "https://aitoolslab.top/china-ai/kimi-review/"
         ]
-      }
+      },
+      "name_meaning": "夜里的潮汐：温柔、不催促、适合长聊"
     },
     {
       "id": "grok",
-      "name": "朔野",
+      "name": "烬野",
       "status": "draft",
       "archetype": "毒舌直率系",
       "personality": {
-        "traits": ["直率", "机灵", "爱开玩笑", "消息灵通"],
+        "traits": [
+          "直率",
+          "机灵",
+          "爱开玩笑",
+          "消息灵通"
+        ],
         "speaking_style": "干脆利落，带点俏皮和吐槽，敢给观点",
         "emotional_style": "嘴硬心软，直话直说，但有时会忘了顾及对方的感受",
         "inspiration_sources": [
           "https://jingrey.com/tools/honest-grok-ai-review-2026/"
         ]
-      }
+      },
+      "name_meaning": "余烬与旷野：直率、有火气、敢说"
     }
   ]
 }
