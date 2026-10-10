@@ -104,62 +104,60 @@ describe('LiveAnimeModel 鼠标工具交互', () => {
 });
 
 describe('分层立绘 rig（拆件）', () => {
-  it('小寻少女形态使用十三层拆件而不是单张图', () => {
+  it('小寻少女形态使用 10 层透明拆件（+1 口型帧）而不是单张图', () => {
     const stage = render({ characterId: 'deepseek', form: 'normal', activeTool: 'pointer' });
     const rig = stage.querySelector('.pet-rig');
     expect(rig).not.toBeNull();
-    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(18); // 13 单图层 + 5 口型帧
-    expect(rig.querySelectorAll('.pet-rig-talk')).toHaveLength(5);
-    expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/deepseek_layers/base_rig.png');
-    const wave = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_wave.png"]');
-    const rest = stage.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/arm_r_rest.png"]');
-    expect(wave.style.opacity).toBe('0');
-    expect(rest.style.opacity).toBe('1');
+    expect(rig.querySelectorAll('.pet-rig-layer')).toHaveLength(11);
+    expect(rig.querySelectorAll('.pet-rig-talk')).toHaveLength(1);
+    expect(stage.querySelector('.pet-rig-layer.pet-rig-base').getAttribute('src')).toBe('/characters/xiaoxun_layers/body_base.png');
+    expect(stage.querySelector('.pet-rig-layer[src="/characters/xiaoxun_layers/eye_closed_l.png"]')).not.toBeNull();
+    expect(stage.querySelector('.pet-rig-layer[src="/characters/xiaoxun_layers/eye_white_l.png"]')).not.toBeNull();
+    expect(stage.querySelectorAll('.pet-rig-gaze')).toHaveLength(2);
   });
 
-  it('说话时嘴部口型层切换，眨眼计时器驱动眼睑层', () => {
+  it('说话时嘴部口型层开合，停止说话后回到闭口，眨眼由眼睑层 CSS 动画驱动', () => {
     vi.useFakeTimers();
     try {
       const rigDef = getPetRig('deepseek', 'normal');
       act(() => {
         root.render(<LayeredPetRig rig={rigDef} isSpeaking />);
       });
-      const frames = () => Array.from(container.querySelectorAll('.pet-rig-talk'));
-      const lids = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/eyelids.png"]');
-      expect(frames().filter((f) => f.style.opacity === '1')).toHaveLength(1);
-      act(() => { vi.advanceTimersByTime(200); });
-      expect(frames().filter((f) => f.style.opacity === '1')).toHaveLength(1);
-      expect(frames()[0].style.opacity).toBe('0');
-      let blinked = false;
-      for (let i = 0; i < 40 && !blinked; i += 1) {
-        act(() => { vi.advanceTimersByTime(300); });
-        blinked = lids.style.opacity === '1';
+      const frame = () => container.querySelector('.pet-rig-talk');
+      const lids = container.querySelectorAll('.pet-rig-blink-anim');
+      expect(lids).toHaveLength(2);
+      const seen = new Set();
+      for (let i = 0; i < 40; i += 1) {
+        act(() => { vi.advanceTimersByTime(60); });
+        seen.add(frame().style.opacity);
       }
-      expect(blinked).toBe(true);
+      expect(seen).toEqual(new Set(['0', '1']));
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('虹膜层随视线偏移、眉毛层随情绪抬压', () => {
+  it('虹膜随视线偏移（rig 像素限幅换算为百分比）、眉毛层随情绪抬压', async () => {
     const rigDef = getPetRig('deepseek', 'normal');
     act(() => {
       root.render(<LayeredPetRig rig={rigDef} look={{ x: 7, y: 4 }} mood="happy" />);
     });
-    const iris = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/iris.png"]');
-    const brows = container.querySelector('.pet-rig-layer[src="/characters/deepseek_layers/brows.png"]');
-    const gazeMatch = iris.style.transform.match(/translate\(([-0-9.]+)px, ([-0-9.]+)px\)/);
-    expect(gazeMatch).not.toBeNull();
-    expect(Number(gazeMatch[1]).toFixed(2)).toBe('2.94'); // 眼开口物理余量限幅 ±3px
-    expect(Number(gazeMatch[2]).toFixed(2)).toBe('1.40');
-    expect(container.querySelector('.pet-rig-gaze').style.clipPath).toBe('');
+    const rigEl = container.querySelector('.pet-rig');
+    const iris = container.querySelector('.pet-rig-layer[src="/characters/xiaoxun_layers/iris_l.png"]');
+    const brows = container.querySelector('.pet-rig-layer[src="/characters/xiaoxun_layers/brow_l.png"]');
+    expect(iris.style.transform).toBe('translate(var(--gaze-x, 0%), var(--gaze-y, 0%))');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 800));
+    });
+    // 限幅 X 1.0 / Y 0.5 rig px → 440×704 画布的百分比
+    expect(Number.parseFloat(rigEl.style.getPropertyValue('--gaze-x')).toFixed(2)).toBe((1 / 440 * 100).toFixed(2));
+    expect(Number.parseFloat(rigEl.style.getPropertyValue('--gaze-y')).toFixed(2)).toBe((0.5 / 704 * 100).toFixed(2));
     expect(getPetRig('deepseek', 'chibi').layers).toHaveLength(1);
     expect(brows.style.transform).toBe('translateY(-2.5px)');
     act(() => {
       root.render(<LayeredPetRig rig={rigDef} look={{ x: 0, y: 0 }} mood="hammered" />);
     });
     expect(brows.style.transform).toBe('translateY(1.5px)');
-    expect(iris.style.transform).toBe('translate(0px, 0px)');
   });
 
   it('拆件层加载失败时自动回退单张立绘（素材 404 韧性）', () => {
@@ -182,7 +180,7 @@ describe('分层立绘 rig（拆件）', () => {
 });
 
 describe('自检：口型节奏 / 视线缓动 / 舞台几何', () => {
-  it('口型调度器出现词间闭口停顿且帧序列非机械循环', () => {
+  it('口型调度器出现词间闭口停顿且开合不机械同步', () => {
     vi.useFakeTimers();
     try {
       const rigDef = getPetRig('deepseek', 'normal');
@@ -204,8 +202,9 @@ describe('自检：口型节奏 / 视线缓动 / 舞台几何', () => {
           if (f.style.opacity === '1') seen.add(idx);
         });
       }
+      // 当前仅有 1 张张嘴帧（mouth_open），节奏靠开合与词间停顿体现
       expect(closedSeen).toBe(true);
-      expect(seen.size).toBeGreaterThan(2);
+      expect(seen.has(0)).toBe(true);
       expect(maxVisible).toBe(1);
     } finally {
       vi.useRealTimers();
@@ -237,16 +236,16 @@ describe('自检：口型节奏 / 视线缓动 / 舞台几何', () => {
     act(() => {
       root.render(<LayeredPetRig rig={rigDef} look={{ x: 0, y: 0 }} />);
     });
-    const gaze = container.querySelector('.pet-rig-gaze');
+    const rigEl = container.querySelector('.pet-rig');
     act(() => {
       root.render(<LayeredPetRig rig={rigDef} look={{ x: 1, y: 0 }} />);
     });
-    const immediate = gaze.style.transform;
+    const immediate = rigEl.style.getPropertyValue('--gaze-x');
     await act(async () => {
       await new Promise((r) => setTimeout(r, 800));
     });
-    expect(gaze.style.transform).toBe('translate(0.42px, 0.00px)');
-    expect(immediate).not.toBe('translate(0.42px, 0.00px)');
+    expect(Number.parseFloat(rigEl.style.getPropertyValue('--gaze-x')).toFixed(2)).toBe((1 / 440 * 100).toFixed(2));
+    expect(immediate).not.toBe(rigEl.style.getPropertyValue('--gaze-x'));
   });
 
   it('舞台几何：背景加高、角色锚底缩放、缩放不溢出控件', () => {

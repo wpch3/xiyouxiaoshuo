@@ -4,12 +4,11 @@ import React, { useEffect, useRef, useState } from 'react';
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 // 分层立绘渲染器：同尺寸透明 PNG 按 z 序叠放，部件级动画
-// （刘海/双侧发摆动、眼睑眨眼、嘴部口型、虹膜视线、眉毛情绪），
-// 对应拆件清单 PET_RIGS。
+// （眼睑眨眼、嘴部口型、虹膜视线、眉毛情绪），对应 petRig.js 的 layers 清单。
 export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, mood = 'idle', className = '', fallbackSrc = '' }) => {
   const [isBroken, setIsBroken] = useState(false);
   const [talkIdx, setTalkIdx] = useState(0);
-  const gazeRef = useRef(null);
+  const rigRef = useRef(null);
   const gazeTargetRef = useRef({ x: 0, y: 0 });
 
   // 口型节奏调度器：词内随机音素帧（70-160ms）+ 偶发重音长帧 +
@@ -55,22 +54,28 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
     };
   }, [isSpeaking]);
 
-  // 视线缓动：rAF 直接写 transform，不触发 React 重渲染
+  // 视线缓动：rAF 写容器上的 CSS 变量（百分比），所有虹膜层共用，不触发 React 重渲染。
+  // 百分比相对于虹膜层自身尺寸，即整张 rig 的宽高，因此限幅以 rig 像素换算后写入。
   useEffect(() => {
     let raf = 0;
     const cur = { ...gazeTargetRef.current };
     const tick = () => {
       cur.x += (gazeTargetRef.current.x - cur.x) * 0.16;
       cur.y += (gazeTargetRef.current.y - cur.y) * 0.16;
-      if (gazeRef.current) gazeRef.current.style.transform = `translate(${cur.x.toFixed(2)}px, ${cur.y.toFixed(2)}px)`;
+      const el = rigRef.current;
+      if (el && rig) {
+        el.style.setProperty('--gaze-x', `${((cur.x / rig.width) * 100).toFixed(4)}%`);
+        el.style.setProperty('--gaze-y', `${((cur.y / rig.height) * 100).toFixed(4)}%`);
+      }
       raf = window.requestAnimationFrame(tick);
     };
     raf = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(raf);
-  }, []);
+  }, [rig]);
 
-  const gazeX = clamp((look.x || 0) * 0.42, -3, 3);
-  const gazeY = clamp((look.y || 0) * 0.35, -1.5, 1.5);
+  const limit = (rig && rig.gazeLimit) || { x: 1, y: 0.5 };
+  const gazeX = clamp((look.x || 0) * limit.x, -limit.x, limit.x);
+  const gazeY = clamp((look.y || 0) * limit.y, -limit.y, limit.y);
   gazeTargetRef.current = { x: gazeX, y: gazeY };
   const browShift = mood === 'happy' ? -2.5 : mood === 'hammered' ? 1.5 : 0;
 
@@ -80,7 +85,7 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
   }
 
   return (
-    <div className={`pet-rig ${className}`} data-rig-layers={rig.layers.length}>
+    <div ref={rigRef} className={`pet-rig ${className}`} data-rig-layers={rig.layers.length}>
       {rig.layers.map((layer) => {
         if (layer.mode === 'talk') {
           const active = isSpeaking ? talkIdx : -1;
@@ -96,20 +101,15 @@ export const LayeredPetRig = ({ rig, isSpeaking = false, look = { x: 0, y: 0 }, 
             />
           ));
         }
-        const visible = layer.mode === 'base' || layer.mode === 'static'
-          || layer.mode.startsWith('sway')
-          || layer.mode === 'gaze' || layer.mode === 'brow'
-          || layer.mode === 'arm_rest' || layer.mode === 'blink'
-          || (layer.mode === 'arm_wave' && mood === 'waving');
+        // 眨眼层由 CSS 动画控制透明度，其余静态层始终可见
         let transform;
-        if (layer.mode === 'gaze') transform = `translate(${gazeX}px, ${gazeY}px)`;
+        if (layer.mode === 'gaze') transform = 'translate(var(--gaze-x, 0%), var(--gaze-y, 0%))';
         if (layer.mode === 'brow') transform = `translateY(${browShift}px)`;
-        const style = { zIndex: layer.z, opacity: visible ? 1 : 0, transform };
+        const style = { zIndex: layer.z, opacity: 1, transform };
         return (
           <img
-            ref={layer.mode === 'gaze' ? gazeRef : undefined}
             key={layer.id}
-            className={`pet-rig-layer pet-rig-${layer.mode}${layer.mode.startsWith('sway') ? ` pet-rig-${layer.mode}-anim` : ''}${layer.mode === 'blink' ? ' pet-rig-blink-anim' : ''}`}
+            className={`pet-rig-layer pet-rig-${layer.mode}${layer.mode === 'blink' ? ' pet-rig-blink-anim' : ''}`}
             src={layer.src}
             alt=""
             draggable="false"

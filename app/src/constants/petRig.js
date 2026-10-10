@@ -10,36 +10,23 @@
 export const PET_RIGS = {
   deepseek: {
     normal: {
-      width: 424,
-      height: 632,
-      // 眼白遮罩：限制虹膜移动不超出眼形（clip-path 椭圆组）
-      clip: 'ellipse(2.59% 0.63% at 45.52% 15.35%), ellipse(2.36% 0.71% at 54.95% 15.27%)', // 网格实测眼形（仅记录；渲染用虹膜自带原画边缘）
+      // 小寻新分层：全部为 440x704 透明 PNG，同尺寸同锚点，直接叠放。
+      // 眼白静止，虹膜单独随视线移动，眼睑（闭眼）只在眨眼时显示。
+      width: 440,
+      height: 704,
+      gazeLimit: { x: 1.0, y: 0.5 }, // rig px：虹膜只在眼白内移动
       layers: [
-        { id: 'back_hair_l', src: '/characters/deepseek_layers/back_hair_l.png', mode: 'sway_bl', z: 0 },
-        { id: 'back_hair_r', src: '/characters/deepseek_layers/back_hair_r.png', mode: 'sway_br', z: 1 },
-        { id: 'base', src: '/characters/deepseek_layers/base_rig.png', mode: 'base', z: 2 },
-        {
-          id: 'mouth_set',
-          mode: 'talk',
-          z: 3,
-          frames: [
-            '/characters/deepseek_layers/mouth_open.png',
-            '/characters/deepseek_layers/mouth_e.png',
-            '/characters/deepseek_layers/mouth_i.png',
-            '/characters/deepseek_layers/mouth_o.png',
-            '/characters/deepseek_layers/mouth_u.png',
-          ],
-        },
-        { id: 'iris', src: '/characters/deepseek_layers/iris.png', mode: 'gaze', z: 4 },
-        { id: 'eye_hair', src: '/characters/deepseek_layers/eye_hair.png', mode: 'static', z: 5 },
-        { id: 'eyelids', src: '/characters/deepseek_layers/eyelids.png', mode: 'blink', z: 6 },
-        { id: 'brows', src: '/characters/deepseek_layers/brows.png', mode: 'brow', z: 7 },
-        { id: 'arm_l', src: '/characters/deepseek_layers/arm_l.png', mode: 'static', z: 8 },
-        { id: 'arm_r_rest', src: '/characters/deepseek_layers/arm_r_rest.png', mode: 'arm_rest', z: 9 },
-        { id: 'arm_r_wave', src: '/characters/deepseek_layers/arm_r_wave.png', mode: 'arm_wave', z: 10 },
-        { id: 'side_hair_l', src: '/characters/deepseek_layers/side_hair_l.png', mode: 'sway_l', z: 11 },
-        { id: 'side_hair_r', src: '/characters/deepseek_layers/side_hair_r.png', mode: 'sway_r', z: 12 },
-        { id: 'bangs', src: '/characters/deepseek_layers/bangs.png', mode: 'sway', z: 13 },
+        { id: 'base', src: '/characters/xiaoxun_layers/body_base.png', mode: 'base', z: 0 },
+        { id: 'eye_white_l', src: '/characters/xiaoxun_layers/eye_white_l.png', mode: 'static', z: 1 },
+        { id: 'eye_white_r', src: '/characters/xiaoxun_layers/eye_white_r.png', mode: 'static', z: 1 },
+        { id: 'iris_l', src: '/characters/xiaoxun_layers/iris_l.png', mode: 'gaze', z: 2 },
+        { id: 'iris_r', src: '/characters/xiaoxun_layers/iris_r.png', mode: 'gaze', z: 2 },
+        { id: 'mouth_closed', src: '/characters/xiaoxun_layers/mouth_closed.png', mode: 'static', z: 3 },
+        { id: 'mouth_set', mode: 'talk', z: 4, frames: ['/characters/xiaoxun_layers/mouth_open.png'] },
+        { id: 'eye_closed_l', src: '/characters/xiaoxun_layers/eye_closed_l.png', mode: 'blink', z: 5 },
+        { id: 'eye_closed_r', src: '/characters/xiaoxun_layers/eye_closed_r.png', mode: 'blink', z: 5 },
+        { id: 'brow_l', src: '/characters/xiaoxun_layers/brow_l.png', mode: 'brow', z: 6 },
+        { id: 'brow_r', src: '/characters/xiaoxun_layers/brow_r.png', mode: 'brow', z: 6 },
       ],
     },
     chibi: {
