@@ -21,16 +21,16 @@ extern "C" {
 #endif
 
 /* ---- 常量 ---------------------------------------------------------- */
-#define PET_RIG_W 880
-#define PET_RIG_H 1408
+#define PET_RIG_W 440
+#define PET_RIG_H 704
 
 #define PET_BLINK_PERIOD 4.6
 #define PET_BLINK_HOLD 0.16
 #define PET_SLEEP_IDLE_SEC 90.0
 #define PET_WAKE_IDLE_SEC 1.5
 #define PET_GAZE_EASE 0.2
-#define PET_GAZE_LIMIT_X 6.2 /* rig px（880 宽画布，按 3.0*880/424 换算） */
-#define PET_GAZE_LIMIT_Y 3.3 /* rig px（1408 高画布，按 1.5*1408/632 换算） */
+#define PET_GAZE_LIMIT_X 1.0 /* rig px：虹膜只在眼白内移动（440 宽 rig） */
+#define PET_GAZE_LIMIT_Y 0.5 /* rig px */
 #define PET_HEAD_ZONE 0.30
 #define PET_CLICK_TAP_DUR 0.30 /* 鼠标点击身体 */
 #define PET_KEY_TAP_DUR 0.35   /* 全局按键反应 */
@@ -45,7 +45,7 @@ extern "C" {
 #define PET_SWAY_SLEEP 0.5
 #define PET_SCALE_MIN 0.3
 #define PET_SCALE_MAX 3.0
-#define PET_SCALE_DEFAULT 0.30
+#define PET_SCALE_DEFAULT 0.60
 #define PET_SCALE_STEP_UP 1.12
 #define PET_SCALE_STEP_DOWN 0.9
 
@@ -78,7 +78,7 @@ typedef struct {
     double sway_amp;      /* rig px */
 } PetLayerSpec;
 
-#define PET_LAYER_COUNT 8
+#define PET_LAYER_COUNT 10
 /* z 序：索引越小越靠底（与 HANDOVER §3 一致） */
 extern const PetLayerSpec PET_LAYERS[PET_LAYER_COUNT];
 

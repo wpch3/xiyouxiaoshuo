@@ -11,8 +11,10 @@
 /* 层清单：与 app/src/constants/petRig.js、desktop_pet_qt.py 一致 */
 const PetLayerSpec PET_LAYERS[PET_LAYER_COUNT] = {
     {"body_base", PET_MODE_BASE, 0.0, 0.0},
-    {"eye_open_l", PET_MODE_GAZE, 0.0, 0.0},
-    {"eye_open_r", PET_MODE_GAZE, 0.0, 0.0},
+    {"eye_white_l", PET_MODE_STATIC, 0.0, 0.0},
+    {"eye_white_r", PET_MODE_STATIC, 0.0, 0.0},
+    {"iris_l", PET_MODE_GAZE, 0.0, 0.0},
+    {"iris_r", PET_MODE_GAZE, 0.0, 0.0},
     {"eye_closed_l", PET_MODE_BLINK, 0.0, 0.0},
     {"eye_closed_r", PET_MODE_BLINK, 0.0, 0.0},
     {"brow_l", PET_MODE_BROW, 0.0, 0.0},
