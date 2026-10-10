@@ -14,11 +14,11 @@
 <body>
   <div class="wrap">
     <canvas id="pet" width="848" height="1360"></canvas>
-    <div class="hint">鼠标移动：视线跟随 · 自动眨眼 · 呼吸与头发、鲸尾轻微摆动（无口型）</div>
+    <div class="hint">鼠标移动：视线跟随 · 自动眨眼 · 上半身呼吸（腰以下静止）· 头发与鲸尾轻微摆动（无口型）</div>
   </div>
   <script>
+    const names = ['base_body_head', 'hair_back_medium', 'iris_L', 'iris_R', 'hair_front_medium', 'whale_hairpin', 'lid_L', 'lid_R', 'eye_clip_L', 'eye_clip_R'];
     const L = {};
-    const names = ['base_body_head', 'hair_back_medium', 'iris_L', 'iris_R', 'hair_front_medium', 'whale_hairpin', 'lid_L', 'lid_R'];
     let loaded = 0;
     names.forEach((n) => {
       const img = new Image();
@@ -29,35 +29,24 @@
 
     const canvas = document.getElementById('pet');
     const ctx = canvas.getContext('2d');
-    // 眼睛中心（画布坐标，与 norm 图层一致）
+    const W = 848, H = 1360;
+    // 眼睛中心（画布坐标）
     const EYE_L = { x: 385, y: 318 };
     const EYE_R = { x: 458, y: 318 };
     // 头发摆动支点（头顶附近）
     const PIVOT = { x: 424, y: 150 };
+    // 腰部分界：y<=600 完全随呼吸移动，y>=700 完全静止，之间线性过渡
+    const WAIST_FULL = 600, WAIST_ZERO = 700;
     const gaze = { x: 0, y: 0, tx: 0, ty: 0 };
 
+    // 眼白内的视线范围（眼白约 33px 宽，所以范围较小，超出部分由遮罩裁掉）
     window.addEventListener('pointermove', (e) => {
       const r = canvas.getBoundingClientRect();
       const nx = (e.clientX - r.left) / r.width - 0.5;
       const ny = (e.clientY - r.top) / r.height - 0.5;
-      // 视线限幅：只在眼白内移动
-      // 视线范围：左右 ±12px、上下 ±7px（画布 848 宽，虹膜约 25px）
-      gaze.tx = Math.max(-1, Math.min(1, nx * 2)) * 12;
-      gaze.ty = Math.max(-1, Math.min(1, ny * 2)) * 7;
+      gaze.tx = Math.max(-1, Math.min(1, nx * 2)) * 5;
+      gaze.ty = Math.max(-1, Math.min(1, ny * 2)) * 3;
     });
-
-    function drawWithTransform(img, opts) {
-      ctx.save();
-      if (opts.pivot) {
-        ctx.translate(opts.pivot.x, opts.pivot.y);
-        ctx.rotate(opts.rot || 0);
-        ctx.translate(-opts.pivot.x, -opts.pivot.y);
-      }
-      ctx.translate(opts.dx || 0, opts.dy || 0);
-      ctx.drawImage(img, 0, 0, 848, 1360);
-      ctx.restore();
-    }
-
 
     // 眨眼：按 Live2D CubismWebFramework CubismEyeBlink 的状态机
     // 默认参数：闭合 0.1s、闭着 0.05s、睁开 0.15s、间隔随机（当前时刻起 0–7s）
@@ -95,42 +84,82 @@
       }
     }
 
+    // 腰部权重：上半身 1，腰以下 0
+    function waistWeight(y) {
+      if (y <= WAIST_FULL) return 1;
+      if (y >= WAIST_ZERO) return 0;
+      return 1 - (y - WAIST_FULL) / (WAIST_ZERO - WAIST_FULL);
+    }
+
+    // 按水平条带绘制：每条带的纵向偏移由腰部权重决定，腰以下不动
+    function drawUpperWarped(img, amp) {
+      const STRIP = 4;
+      for (let y0 = 0; y0 < H; y0 += STRIP) {
+        const dy = Math.round(amp * waistWeight(y0 + STRIP / 2));
+        ctx.drawImage(img, 0, y0, W, STRIP, 0, y0 + dy, W, STRIP);
+      }
+    }
+
+    // 虹膜：先按视线偏移，再裁剪到眼白遮罩内
+    const eyeBuf = document.createElement('canvas');
+    eyeBuf.width = W; eyeBuf.height = H;
+    const eyeCtx = eyeBuf.getContext('2d');
+    function drawEye(iris, clip, eye, amp) {
+      eyeCtx.clearRect(0, 0, W, H);
+      eyeCtx.globalCompositeOperation = 'source-over';
+      eyeCtx.drawImage(iris, gaze.x, gaze.y + amp);
+      eyeCtx.globalCompositeOperation = 'destination-in';
+      eyeCtx.drawImage(clip, 0, amp);
+      eyeCtx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(eyeBuf, 0, 0, W, H, 0, 0, W, H);
+    }
+
     function start() {
       const t0 = performance.now();
       function frame(now) {
         const t = (now - t0) / 1000;
         gaze.x += (gaze.tx - gaze.x) * 0.15;
         gaze.y += (gaze.ty - gaze.y) * 0.15;
-        const breath = Math.sin(t * Math.PI * 2 * 0.25) * 1.5; // 约 4 秒一次
-        const sway = Math.sin(t * Math.PI * 2 * 0.4) * 0.012;  // 头发摆动（弧度）
-        updateBlink(t);
+        // 呼吸：上半身 ±2px，约 4 秒一次（整数像素，避免模糊）
+        const breathAmp = Math.round(Math.sin(t * Math.PI * 2 * 0.25) * 2);
+        const sway = Math.sin(t * Math.PI * 2 * 0.4) * 0.012;
         const whaleRot = Math.sin(t * Math.PI * 2 * 0.5) * 0.03;
+        updateBlink(t);
 
-        ctx.clearRect(0, 0, 848, 1360);
-        // 身体与底板整体呼吸
-        drawWithTransform(L.base_body_head, { dy: breath });
-        // 后发随风摆动
-        drawWithTransform(L.hair_back_medium, { pivot: PIVOT, rot: sway, dy: breath });
-        // 虹膜跟随视线
+        ctx.clearRect(0, 0, W, H);
+        // 1. 身体底板（腰以上随呼吸，腰以下静止）
+        drawUpperWarped(L.base_body_head, breathAmp);
+        // 2. 后发（随风摆动 + 呼吸）
         ctx.save();
-        ctx.translate(gaze.x, gaze.y + breath);
-        ctx.drawImage(L.iris_L, 0, 0, 848, 1360);
-        ctx.drawImage(L.iris_R, 0, 0, 848, 1360);
+        ctx.translate(PIVOT.x, PIVOT.y); ctx.rotate(sway); ctx.translate(-PIVOT.x, -PIVOT.y);
+        ctx.translate(0, breathAmp);
+        ctx.drawImage(L.hair_back_medium, 0, 0, W, H);
         ctx.restore();
-        // 眼皮（眨眼）：由 blink.open 驱动，闭合时从上方下落并淡入
+        // 3. 眼睛：虹膜按视线移动并裁剪到眼白内
+        drawEye(L.iris_L, L.eye_clip_L, EYE_L, breathAmp);
+        drawEye(L.iris_R, L.eye_clip_R, EYE_R, breathAmp);
+        // 4. 眼皮（眨眼）：闭合时从上方下落并淡入
         const c = 1 - blink.open;
         if (c > 0.001) {
-          const dy = -(1 - c) * 30 + breath;
+          const dy = -(1 - c) * 30 + breathAmp;
           ctx.save();
           ctx.globalAlpha = Math.min(1, c * 1.2);
-          ctx.drawImage(L.lid_L, 385 - 40, 318 - 35 + dy, 80, 70);
-          ctx.drawImage(L.lid_R, 458 - 40, 318 - 35 + dy, 80, 70);
+          ctx.drawImage(L.lid_L, EYE_L.x - 40, EYE_L.y - 35 + dy, 80, 70);
+          ctx.drawImage(L.lid_R, EYE_R.x - 40, EYE_R.y - 35 + dy, 80, 70);
           ctx.restore();
         }
-        // 前发（刘海）轻微摆动
-        drawWithTransform(L.hair_front_medium, { pivot: PIVOT, rot: sway * 0.6, dy: breath });
-        // 鲸尾发饰轻微晃动
-        drawWithTransform(L.whale_hairpin, { pivot: { x: 690, y: 330 }, rot: whaleRot, dy: breath });
+        // 5. 前发（刘海）
+        ctx.save();
+        ctx.translate(PIVOT.x, PIVOT.y); ctx.rotate(sway * 0.6); ctx.translate(-PIVOT.x, -PIVOT.y);
+        ctx.translate(0, breathAmp);
+        ctx.drawImage(L.hair_front_medium, 0, 0, W, H);
+        ctx.restore();
+        // 6. 鲸尾发饰
+        ctx.save();
+        ctx.translate(690, 330); ctx.rotate(whaleRot); ctx.translate(-690, -330);
+        ctx.translate(0, breathAmp);
+        ctx.drawImage(L.whale_hairpin, 0, 0, W, H);
+        ctx.restore();
         requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
